@@ -1,0 +1,25 @@
+# Node/Next.js
+node_modules/
+.next/
+.out/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+# Env & local
+.env
+.env.*.local
+*.local
+# Framework alternates
+vendor/
+storage/
+.storage/
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+out-offline/
+cabdb.sqlite
+prisma/cabdb.sqlite

@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
+      - name: Start server
+        run: npm run lh:serve &
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+      - name: Lighthouse CI
+        run: npm run lh:ci
+      - name: Check bundle budgets
+        run: npm run check:budgets
+      - name: SEO Audit
+        run: npm run seo:audit

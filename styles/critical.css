@@ -1,0 +1,37 @@
+/* Critical CSS (<=10KB) for above-the-fold hero, headings, primary CTAs, fare cards */
+:root { --brand-bg: #0f172a; --brand-accent:#f59e0b; --text-light:#f1f5f9; --text-dim:#64748b; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+body { margin:0; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+main { min-height:100vh; }
+/* Hero */
+[data-hero] { padding:4rem 1.5rem; text-align:center; background:linear-gradient(135deg,#0f172a,#1e293b); }
+[data-hero] h1 { color:#fff; font-size:clamp(2.2rem,4vw,3rem); margin:0 0 1rem; line-height:1.1; font-weight:700; }
+[data-hero] p { color:#cbd5e1; max-width:720px; margin:0 auto 2rem; }
+/* Buttons */
+.c-btn { display:inline-block; padding:14px 28px; border-radius:8px; font-weight:600; text-decoration:none; font-size:16px; transition:background .2s,box-shadow .2s; }
+.c-btn--primary { background:var(--brand-accent); color:#1e293b; box-shadow:0 4px 12px rgba(0,0,0,.15); }
+.c-btn--secondary { background:#334155; color:var(--text-light); }
+.c-btn:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+/* Headings */
+h1,h2 { font-weight:600; color:#0f172a; letter-spacing:-.5px; }
+section > h2 { margin:0 0 1.25rem; font-size:1.8rem; }
+/* Route / Fare cards */
+.route-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+.route-card { display:flex; flex-direction:column; gap:4px; padding:14px 16px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; text-decoration:none; color:#0f172a; font-size:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.route-card small { color:#64748b; font-size:12px; }
+/* Fare cards on fare page */
+.fare-cards { display:flex; flex-wrap:wrap; gap:16px; }
+.fare-card { border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.05); min-width:180px; }
+.fare-card h3 { margin:0 0 .5rem; font-size:1.05rem; }
+/* Utility */
+.muted { color:#555; }
+.hidden { position:absolute; clip:rect(1px,1px,1px,1px); padding:0; border:0; height:1px; width:1px; overflow:hidden; }
+/* Layout shift prevention */
+.no-shift{position:relative;}
+.h-120{min-height:120px;}
+.h-160{min-height:160px;}
+.h-200{min-height:200px;}
+/* Skeleton */
+.skeleton-line{height:14px;background:#e2e8f0;border-radius:4px;margin:6px 0;animation:pulse 1.4s ease-in-out infinite;}
+@keyframes pulse{0%{opacity:0.55}50%{opacity:1}100%{opacity:0.55}}
+/* Above fold layout adjustments */
+@media (max-width:700px){ [data-hero]{ padding:3.5rem 1.25rem; } section > h2 { font-size:1.55rem; } }

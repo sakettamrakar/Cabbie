@@ -1,0 +1,9 @@
+{
+  "htmlMaxKb": 30,
+  "criticalCssMaxKb": 10,
+  "farePage": { "jsMaxKb": 70, "cssMaxKb": 25 },
+  "contentPage": { "jsMaxKb": 50, "cssMaxKb": 20 },
+  "cityRoutesPage": { "jsMaxKb": 50, "cssMaxKb": 20 },
+  "bookingIsland": { "jsMaxKb": 50 },
+  "webVitals": { "LCPms": 2500, "INPms": 200, "CLS": 0.10 }
+}

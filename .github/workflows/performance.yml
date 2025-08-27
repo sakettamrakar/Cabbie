@@ -1,0 +1,46 @@
+name: "Performance & Bundle Audit"
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  analyze-and-lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build with analyzer (stats + report)
+        run: npm run analyze
+      - name: Upload bundle analysis artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: |
+            analyze
+            .next/analyze
+          if-no-files-found: warn
+      - name: Run bundle budget check
+        run: npm run check:budgets
+      - name: Start production server
+        run: npm run lh:serve &
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+      - name: Lighthouse CI
+        run: npm run lh:ci
+      - name: Upload Lighthouse artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: artifacts
+          if-no-files-found: error

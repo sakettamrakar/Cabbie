@@ -1,0 +1,4 @@
+const fs=require('fs');const path=require('path');const {execSync}=require('child_process');
+const targets=[path.join(process.cwd(),'cabdb.sqlite'),path.join(process.cwd(),'prisma','cabdb.sqlite')];
+for(const t of targets){if(fs.existsSync(t)){try{fs.unlinkSync(t);console.log('Removed',t);}catch(e){console.warn('Could not remove',t);}}}
+try{console.log('Running migrations...');execSync('npm run db:migrate',{stdio:'inherit'});console.log('Seeding...');execSync('npm run db:seed',{stdio:'inherit'});console.log('✅ DB reset complete');}catch(e){console.error('DB reset failed',e.message);process.exit(1);}

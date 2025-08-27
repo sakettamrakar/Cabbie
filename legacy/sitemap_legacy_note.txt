@@ -1,0 +1,1 @@
+Legacy sitemap page removed. Static sitemap.xml generated into public/.
