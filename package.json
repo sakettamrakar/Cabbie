@@ -2,8 +2,9 @@
   "name": "cab-website",
   "private": true,
   "scripts": {
+    "prebuild": "tsc --project tsconfig.json",
     "dev": "next dev",
-    "build": "next build && node scripts/generate-sitemaps.mjs",
+    "build": "npm run prebuild && next build && node scripts/generate-sitemaps.mjs",
     "start": "next start",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",

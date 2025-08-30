@@ -142,7 +142,7 @@ export default function FarePage({ origin, destination, distance, duration, fare
         </ol></nav>
         <h1 style={{marginBottom:4}}>{origin} to {destination} Taxi Fare</h1>
   <p className="header-sub">{distance} km • ~{duration} mins • Fixed, all-inclusive</p>
-  <p style={{fontSize:12,marginTop:4,color:'#555'}}>{translate('updated_on')} {new Date(updatedOn).toLocaleDateString(undefined,{ day:'numeric', month:'long', year:'numeric' })}</p>
+  <p style={{fontSize:12,marginTop:4,color:'#555'}}>{translate('updated_on')} {new Date(updatedOn).toLocaleDateString('en-GB',{ day:'numeric', month:'long', year:'numeric' })}</p>
       </header>
       <section aria-labelledby="fareCardsHeading">
         <h2 id="fareCardsHeading">Fares</h2>
