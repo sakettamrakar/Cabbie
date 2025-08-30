@@ -1,9 +1,9 @@
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-// Dynamically import the BookingWidget with SSR disabled for better performance
+// Dynamically import the BookingWidget (explicitly TSX) with SSR disabled for better performance
 const BookingWidget = dynamic(
-  () => import('../components/booking/BookingWidget'),
+  () => import('../components/booking/BookingWidget.tsx'),
   { ssr: false }
 );
 export default function Home({ brandName, featuredRoutes, cityCount, routeCount }) {
