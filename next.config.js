@@ -11,8 +11,8 @@ let nextConfig = {
   },
   async headers(){
     return [
-  // Global Content Security Policy (simplified)
-  { source: '/:path*', headers: [ { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com; img-src 'self' data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'" } ] },
+  // Global Content Security Policy (development-friendly)
+  { source: '/:path*', headers: [ { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-eval' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com; img-src 'self' data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'" } ] },
       // Fare pages (example city slugs) – ISR HTML: 24h CDN cache with SWR
       { source: '/(raipur|bhilai|bilaspur)/:path*/fare', headers: [ { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=86400, stale-while-revalidate=86400' } ] },
       // Public route status JSON (example endpoint) – 5m cache

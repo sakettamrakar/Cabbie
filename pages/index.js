@@ -64,17 +64,21 @@ const steps = [
 import { PrismaClient } from '@prisma/client';
 export async function getStaticProps(){
   const prisma = new PrismaClient();
-  const [routes,cities] = await Promise.all([
-    prisma.route.findMany({ where:{ is_active:true }, include:{ origin:true, destination:true }, take:8, orderBy:{ id:'asc' } }),
-    prisma.city.count()
-  ]);
-  return {
-    props:{
-      brandName: process.env.BRAND_NAME || 'Raipur Cabs',
-      featuredRoutes: routes.map(r=>({ id:r.id, origin:{ slug:r.origin.slug, name:r.origin.name }, destination:{ slug:r.destination.slug, name:r.destination.name }, distance_km:r.distance_km })),
-      cityCount: cities,
-      routeCount: routes.length
-    },
-    revalidate: 3600
-  };
+  try {
+    const [routes,cities] = await Promise.all([
+      prisma.route.findMany({ where:{ is_active:true }, include:{ origin:true, destination:true }, take:8, orderBy:{ id:'asc' } }),
+      prisma.city.count()
+    ]);
+    return {
+      props:{
+        brandName: process.env.BRAND_NAME || 'Raipur Cabs',
+        featuredRoutes: routes.map(r=>({ id:r.id, origin:{ slug:r.origin.slug, name:r.origin.name }, destination:{ slug:r.destination.slug, name:r.destination.name }, distance_km:r.distance_km })),
+        cityCount: cities,
+        routeCount: routes.length
+      },
+      revalidate: 3600
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
 }
