@@ -1,16 +1,30 @@
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the BookingWidget with SSR disabled for better performance
+const BookingWidget = dynamic(
+  () => import('../components/booking/BookingWidget'),
+  { ssr: false }
+);
 export default function Home({ brandName, featuredRoutes, cityCount, routeCount }) {
   return (
     <main>
+      <style jsx global>{criticalCSS}</style>
       <Head>
         <title>{brandName} Intercity Cabs | Outstation & One Way Taxi</title>
         <meta name="description" content={`Book reliable intercity ${brandName} taxis with transparent fares and instant OTP booking.`} />
       </Head>
-      <section data-hero>
-        <h1>{brandName} Intercity Cabs</h1>
-        <p>Reliable one‑way taxi service connecting {cityCount}+ cities with transparent fares, instant booking, and professional drivers.</p>
-        <div style={{display:'flex',justifyContent:'center',gap:16,flexWrap:'wrap'}}>
-          <a href="/booking" className="c-btn c-btn--primary">Book a Cab</a>
+      <section data-hero className="hero-section">
+        <div className="hero-content">
+          <h1>{brandName} Intercity Cabs</h1>
+          <p>Reliable one‑way taxi service connecting {cityCount}+ cities with transparent fares, instant booking, and professional drivers.</p>
+        </div>
+        
+        <div className="booking-widget-container">
+          <BookingWidget />
+        </div>
+        
+        <div className="hero-cta">
           <a href="/routes" className="c-btn c-btn--secondary">Browse All Routes</a>
         </div>
       </section>
@@ -44,6 +58,47 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
     </main>
   );
 }
+
+// Add critical CSS for the booking widget
+const criticalCSS = `
+  /* Hero Section */
+  .hero-section {
+    padding: 2rem 1rem;
+    text-align: center;
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    color: white;
+  }
+  
+  .hero-content {
+    max-width: 800px;
+    margin: 0 auto 2rem;
+  }
+  
+  .hero-cta {
+    margin-top: 1.5rem;
+  }
+  
+  /* Booking Widget */
+  .booking-widget-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (min-width: 768px) {
+    .hero-section {
+      padding: 4rem 1rem;
+    }
+    
+    .booking-widget-container {
+      padding: 2rem;
+    }
+  }
+`;
 
 // Removed inline style objects; replaced with class-based styling (critical + late CSS)
 const benefits = [

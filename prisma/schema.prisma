@@ -8,38 +8,39 @@ datasource db {
 }
 
 model City {
-  id                Int      @id @default(autoincrement())
+  id                Int     @id @default(autoincrement())
   name              String
-  slug              String   @unique
+  slug              String  @unique
   state             String
   airport_code      String?
   airport_city_slug String?
   lat               Float?
   lon               Float?
-  is_active         Boolean  @default(true)
-  originRoutes      Route[]  @relation("OriginCity")
-  destinationRoutes Route[]  @relation("DestinationCity")
+  is_active         Boolean @default(true)
+  destinationRoutes Route[] @relation("DestinationCity")
+  originRoutes      Route[] @relation("OriginCity")
 }
 
 model Route {
-  id                  Int      @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   origin_city_id      Int
   destination_city_id Int
-  is_airport_route    Boolean  @default(false)
+  is_airport_route    Boolean   @default(false)
   distance_km         Float?
   duration_min        Int?
-  is_active           Boolean  @default(true)
-  origin              City     @relation("OriginCity", fields: [origin_city_id], references: [id])
-  destination         City     @relation("DestinationCity", fields: [destination_city_id], references: [id])
-  fares               Fare[]
+  is_active           Boolean   @default(true)
   bookings            Booking[]
+  fares               Fare[]
+  destination         City      @relation("DestinationCity", fields: [destination_city_id], references: [id])
+  origin              City      @relation("OriginCity", fields: [origin_city_id], references: [id])
+
   @@unique([origin_city_id, destination_city_id])
 }
 
 model Fare {
   id                  Int      @id @default(autoincrement())
   route_id            Int
-  car_type            String   // enum simulated: HATCHBACK|SEDAN|SUV
+  car_type            String
   base_fare_inr       Int
   night_surcharge_pct Int      @default(0)
   updated_at          DateTime @default(now())
@@ -51,55 +52,54 @@ model ContentToken {
   key       String   @unique
   scope     String?
   targetId  Int?
-  json      String?  // stored as JSON string
+  json      String?
   updatedAt DateTime @default(now())
 }
 
 model Offer {
-  id          Int      @id @default(autoincrement())
-  code        String   @unique
-  title       String?
-  description String?
-  discount_type String  // FLAT | PCT
-  value       Int
-  cap_inr     Int?
-  conditions  String?   // JSON string (e.g., {"city":"raipur"})
-  active      Boolean  @default(true)
-  valid_from  DateTime?
-  valid_to    DateTime?
+  id            Int       @id @default(autoincrement())
+  code          String    @unique
+  title         String?
+  description   String?
+  discount_type String
+  value         Int
+  cap_inr       Int?
+  conditions    String?
+  active        Boolean   @default(true)
+  valid_from    DateTime?
+  valid_to      DateTime?
 }
 
 model Driver {
-  id          Int         @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   name        String
-  phone       String      @unique
-  car_type    String      // enum simulated
+  phone       String       @unique
+  car_type    String
+  active      Boolean      @default(true)
   vehicle_no  String?
-  active      Boolean     @default(true)
   assignments Assignment[]
 }
 
 model Booking {
-  id               Int            @id @default(autoincrement())
+  id               Int          @id @default(autoincrement())
   route_id         Int
   origin_text      String
   destination_text String
   pickup_datetime  DateTime
-  car_type         String        // enum: HATCHBACK | SEDAN | SUV
+  car_type         String
   fare_quote_inr   Int
-  fare_locked_inr  Int            @default(0)
-  payment_mode     String        @default("COD")       // enum: COD | ONLINE
-  status           String        @default("PENDING")   // enum: PENDING | ASSIGNED | COMPLETED | CANCELLED
+  fare_locked_inr  Int          @default(0)
+  payment_mode     String       @default("COD")
+  status           String       @default("PENDING")
   customer_name    String?
   customer_phone   String
   discount_code    String?
-  // UTM attribution (captured from first touch cookie, optional)
+  created_at       DateTime     @default(now())
   utm_source       String?
   utm_medium       String?
   utm_campaign     String?
-  created_at       DateTime       @default(now())
-  route            Route          @relation(fields: [route_id], references: [id])
   assignments      Assignment[]
+  route            Route        @relation(fields: [route_id], references: [id])
 }
 
 model Assignment {
@@ -108,8 +108,9 @@ model Assignment {
   driver_id  Int
   status     String   @default("ASSIGNED")
   created_at DateTime @default(now())
-  booking    Booking  @relation(fields: [booking_id], references: [id])
   driver     Driver   @relation(fields: [driver_id], references: [id])
+  booking    Booking  @relation(fields: [booking_id], references: [id])
+
   @@unique([booking_id, driver_id])
 }
 
@@ -119,5 +120,3 @@ model User {
   passwordHash String
   created_at   DateTime @default(now())
 }
-
-// NOTE: SQLite connector does not support Prisma native enums; using String columns with documented value sets.
