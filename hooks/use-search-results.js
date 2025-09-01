@@ -30,10 +30,12 @@ export function useSearchResults(initialData) {
                 const query = new URLSearchParams({
                     origin,
                     destination,
-                    datetime,
+                    pickup_datetime: datetime,
                     ...(returnDt && { return_datetime: returnDt }),
+                    ...((searchParams === null || searchParams === void 0 ? void 0 : searchParams.get('passengers')) && { passengers: searchParams.get('passengers') }),
+                    ...((searchParams === null || searchParams === void 0 ? void 0 : searchParams.get('luggage')) && { luggage: searchParams.get('luggage') }),
                 });
-                const response = await fetch(`/api/quotes?${query}`, {
+                const response = await fetch(`/api/search-results?${query}`, {
                     next: { revalidate: 300 } // Cache for 5 minutes
                 });
                 if (!response.ok) {

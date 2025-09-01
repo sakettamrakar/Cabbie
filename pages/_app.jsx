@@ -1,4 +1,4 @@
-import '../styles/global.css';
+import '../styles/professional.css';
 import { useEffect } from 'react';
 import Script from 'next/script';
 import { GA4_ID, pageview, setAnalyticsConsent } from '../lib/analytics/gtag';
@@ -29,7 +29,7 @@ export default function MyApp({ Component, pageProps }) {
         handleRoute(router.asPath); // first render
         router.events.on('routeChangeComplete', handleRoute);
         return () => { router.events.off('routeChangeComplete', handleRoute); };
-    }, [router.asPath]);
+    }, [router.asPath, router.events]);
     useEffect(() => {
         // Initialize consent from cookie if banner already accepted earlier (mirrors banner logic)
         try {

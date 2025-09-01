@@ -1,133 +1,147 @@
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import { PrismaClient } from '@prisma/client';
 
-// Dynamically import the BookingWidget (explicitly TSX) with SSR disabled for better performance
-const BookingWidget = dynamic(
-  () => import('../components/booking/BookingWidget.tsx'),
+// Dynamically import modern components with fallbacks
+const ModernLayout = dynamic(
+  () => import('../components/ModernLayout'),
   { ssr: false }
 );
+
+const ModernBookingWidget = dynamic(
+  () => import('../components/ModernBookingWidget'),
+  { ssr: false }
+);
+
 export default function Home({ brandName, featuredRoutes, cityCount, routeCount }) {
   return (
-    <main>
-      <style jsx global>{criticalCSS}</style>
+    <ModernLayout>
       <Head>
-        <title>{brandName} Intercity Cabs | Outstation & One Way Taxi</title>
+        <title>{brandName} Intercity Cabs | Professional Outstation & One Way Taxi</title>
         <meta name="description" content={`Book reliable intercity ${brandName} taxis with transparent fares and instant OTP booking.`} />
       </Head>
-      <section data-hero className="hero-section">
-        <div className="hero-content">
-          <h1>{brandName} Intercity Cabs</h1>
-          <p>Reliable one‑way taxi service connecting {cityCount}+ cities with transparent fares, instant booking, and professional drivers.</p>
-        </div>
-        
-        <div className="booking-widget-container">
-          <BookingWidget />
-        </div>
-        
-        <div className="hero-cta">
-          <a href="/routes" className="c-btn c-btn--secondary">Browse All Routes</a>
+      
+      {/* Hero Section */}
+      <section className="hero-gradient">
+        <div className="container py-20 text-center text-white">
+          <h1 className="text-5xl font-bold mb-6">
+            {brandName} Intercity Cabs
+          </h1>
+          <p className="text-xl mb-8 max-w-3xl mx-auto text-primary-100">
+            Reliable one-way taxi service connecting {cityCount}+ cities with transparent fares, instant booking, and professional drivers.
+          </p>
+          
+          <div className="max-w-2xl mx-auto mb-8">
+            <ModernBookingWidget />
+          </div>
+          
+          <div className="space-x-4">
+            <a href="/modern-routes" className="btn btn-secondary">
+              Browse All Routes
+            </a>
+          </div>
         </div>
       </section>
-      <section className="section-pad section-narrow">
-        <h2>Popular Routes</h2>
-        <div className="route-grid">
-          {featuredRoutes.map(r=> <a key={r.id} href={`/${r.origin.slug}/${r.destination.slug}/fare`} className="route-card">
-            <span style={{fontWeight:600}}>{r.origin.name} → {r.destination.name}</span>
-            <small>{r.distance_km? `${r.distance_km} km`:'Distance updating'}</small>
-          </a>)}
+
+      {/* Benefits Section */}
+      <section className="py-16 bg-white">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Why Choose {brandName}?
+            </h2>
+            <p className="text-lg text-gray-600">
+              Experience the difference with our professional intercity taxi service
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="card text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🚗</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Professional Drivers</h3>
+              <p className="text-gray-600">Experienced, licensed drivers who know the routes well</p>
+            </div>
+            
+            <div className="card text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Transparent Pricing</h3>
+              <p className="text-gray-600">No hidden fees, upfront pricing with detailed breakdowns</p>
+            </div>
+            
+            <div className="card text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Instant Booking</h3>
+              <p className="text-gray-600">Quick OTP-based booking with instant confirmation</p>
+            </div>
+          </div>
         </div>
       </section>
-      <section className="section-pad" style={{background:'#f1f5f9'}}>
-        <h2>Why Choose {brandName}?</h2>
-        <ul className="benefits-grid">
-          {benefits.map(b=> <li key={b.t} className="benefit-card">
-            <h3>{b.t}</h3>
-            <p>{b.d}</p>
-          </li>)}
-        </ul>
-      </section>
-      <section className="section-pad section-narrow">
-        <h2>How It Works</h2>
-        <ol className="steps">
-          {steps.map(s=> <li key={s.t} className="step-item"><div className="step-badge"></div><div><h3>{s.t}</h3><p>{s.d}</p></div></li>)}
-        </ol>
-      </section>
-      <footer style={{padding:'2rem 1.5rem',textAlign:'center',fontSize:13,color:'#cbd5e1',background:'#0f172a'}}>
-        © {new Date().getFullYear()} {brandName}. All rights reserved. · <a href="/routes" style={{color:'#fff',textDecoration:'underline',fontWeight:600}}>Routes</a>
-      </footer>
-    </main>
+
+      {/* Featured Routes */}
+      {featuredRoutes && featuredRoutes.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="container">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Popular Routes
+              </h2>
+              <p className="text-lg text-gray-600">
+                Our most booked intercity routes
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredRoutes.slice(0, 8).map((route) => (
+                <div key={route.id} className="card hover:shadow-lg transition-shadow">
+                  <h3 className="font-semibold text-lg mb-2">
+                    {route.origin.name} → {route.destination.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Distance: {route.distance_km} km
+                  </p>
+                  <a 
+                    href={`/${route.origin.slug}/${route.destination.slug}/fare`}
+                    className="btn btn-outline btn-sm w-full"
+                  >
+                    Check Fare
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </ModernLayout>
   );
 }
 
-// Add critical CSS for the booking widget
-const criticalCSS = `
-  /* Hero Section */
-  .hero-section {
-    padding: 2rem 1rem;
-    text-align: center;
-    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-    color: white;
-  }
-  
-  .hero-content {
-    max-width: 800px;
-    margin: 0 auto 2rem;
-  }
-  
-  .hero-cta {
-    margin-top: 1.5rem;
-  }
-  
-  /* Booking Widget */
-  .booking-widget-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    padding: 1.5rem;
-  }
-  
-  /* Responsive adjustments */
-  @media (min-width: 768px) {
-    .hero-section {
-      padding: 4rem 1rem;
-    }
-    
-    .booking-widget-container {
-      padding: 2rem;
-    }
-  }
-`;
-
-// Removed inline style objects; replaced with class-based styling (critical + late CSS)
-const benefits = [
-  { t:'Transparent Pricing', d:'Inclusive fares—no hidden taxes or surge.' },
-  { t:'Professional Drivers', d:'Experienced, verified intercity chauffeurs.' },
-  { t:'Clean AC Cars', d:'Maintained hatchbacks, sedans & SUVs.' },
-  { t:'Instant Booking', d:'Quick OTP verification and confirmation.' },
-  { t:'Reliable Support', d:'Status tracking & SMS confirmations.' },
-  { t:'Smart Discounts', d:'Automatic validation of active offers.' }
-];
-const steps = [
-  { t:'Enter Trip Details', d:'Choose origin, destination & pickup time.' },
-  { t:'Verify Phone', d:'Secure OTP verification to proceed.' },
-  { t:'Apply Offer', d:'Optional code validated instantly.' },
-  { t:'Get Confirmation', d:'Driver assigned & details shared.' }
-];
-
-import { PrismaClient } from '@prisma/client';
 export async function getStaticProps(){
   const prisma = new PrismaClient();
   try {
-    const [routes,cities] = await Promise.all([
-      prisma.route.findMany({ where:{ is_active:true }, include:{ origin:true, destination:true }, take:8, orderBy:{ id:'asc' } }),
+    const [routes, cities] = await Promise.all([
+      prisma.route.findMany({ 
+        where: { is_active: true }, 
+        include: { origin: true, destination: true }, 
+        take: 8, 
+        orderBy: { id: 'asc' } 
+      }),
       prisma.city.count()
     ]);
     return {
-      props:{
+      props: {
         brandName: process.env.BRAND_NAME || 'Raipur Cabs',
-        featuredRoutes: routes.map(r=>({ id:r.id, origin:{ slug:r.origin.slug, name:r.origin.name }, destination:{ slug:r.destination.slug, name:r.destination.name }, distance_km:r.distance_km })),
+        featuredRoutes: routes.map(r => ({ 
+          id: r.id, 
+          origin: { slug: r.origin.slug, name: r.origin.name }, 
+          destination: { slug: r.destination.slug, name: r.destination.name }, 
+          distance_km: r.distance_km 
+        })),
         cityCount: cities,
         routeCount: routes.length
       },

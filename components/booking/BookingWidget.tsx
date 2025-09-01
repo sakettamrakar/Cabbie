@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { debounce } from '../../lib/schedule';
+import { fetchLocationSuggestions, generateSessionToken } from '../../lib/places';
 import { 
   TabType, 
   PlaceData, 
@@ -55,6 +57,7 @@ export default function BookingWidget({
   initialDrop = '', 
   className = '' 
 }: BookingWidgetProps) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   
   // Form state
@@ -112,8 +115,11 @@ export default function BookingWidget({
     }));
   };
   
+  // Session token for Google Places API (should be regenerated for each search session)
+  const [sessionToken] = useState(() => generateSessionToken());
+  
   // Handle location input change with debounced suggestions
-  const handleLocationInputChange = useCallback(
+  const debouncedLocationSearch = useCallback(
     debounce(async (field: 'pickup' | 'drop' | `stop-${number}`, value: string) => {
       if (value.length < 2) {
         setSuggestions(null);
@@ -121,25 +127,22 @@ export default function BookingWidget({
       }
       
       try {
-        // In a real app, you would call your geocoding service here
-        // For now, we'll use a mock implementation
-        const mockResults: PlaceData[] = [
-          { display: `${value} City Center`, placeId: '1', lat: 0, lng: 0 },
-          { display: `${value} Airport`, placeId: '2', lat: 0, lng: 0, isAirport: true },
-          { display: `${value} Train Station`, placeId: '3', lat: 0, lng: 0 }
-        ];
-        
+        const results = await fetchLocationSuggestions(value, sessionToken);
         setSuggestions({
           field,
-          items: mockResults
+          items: results
         });
       } catch (error) {
         console.error('Error fetching location suggestions:', error);
         setSuggestions(null);
       }
     }, 300),
-    []
+    [sessionToken]
   );
+  
+  const handleLocationInputChange = useCallback((field: 'pickup' | 'drop' | `stop-${number}`, value: string) => {
+    debouncedLocationSearch(field, value);
+  }, [debouncedLocationSearch]);
   
   // Handle location selection from suggestions
   const handleLocationSelect = (field: 'pickup' | 'drop' | `stop-${number}`, place: PlaceData) => {
@@ -222,8 +225,42 @@ export default function BookingWidget({
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Redirect to booking page or show success message
-      // router.push('/booking/confirmation');
+      // Build search URL parameters
+      const searchParams = new URLSearchParams();
+      searchParams.set('origin', formData.pickup.display);
+      if (formData.drop.display) {
+        searchParams.set('destination', formData.drop.display);
+      }
+      
+      // Combine date and time for pickup_datetime
+      const pickupDateTime = `${formData.pickupDate}T${formData.pickupTime}:00`;
+      searchParams.set('pickup_datetime', pickupDateTime);
+      
+      if (formData.tripType === 'round-trip' && formData.returnDate && formData.returnTime) {
+        const returnDateTime = `${formData.returnDate}T${formData.returnTime}:00`;
+        searchParams.set('return_datetime', returnDateTime);
+      }
+      
+      searchParams.set('passengers', formData.passengers.toString());
+      searchParams.set('luggage', formData.luggage.toString());
+      
+      // Add additional parameters for different trip types
+      if (formData.tripType === 'airport') {
+        searchParams.set('pickup_mode', formData.pickupMode);
+        if (formData.flightNumber) {
+          searchParams.set('flight_number', formData.flightNumber);
+        }
+      }
+      
+      if (formData.tripType === 'hourly') {
+        searchParams.set('package', formData.selectedPackage);
+        searchParams.set('trip_type', 'hourly');
+      } else {
+        searchParams.set('trip_type', formData.tripType);
+      }
+      
+      // Redirect to search results page
+      router.push(`/search-results?${searchParams.toString()}`);
       
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -281,25 +318,82 @@ export default function BookingWidget({
               handleLocationInputChange(field, e.target.value);
             }}
             placeholder={placeholder}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
               error ? 'border-red-500' : 'border-gray-300'
-            }`}
+            } ${suggestions?.field === field && suggestions.items.length > 0 ? 'rounded-b-none border-b-0' : ''}`}
             aria-invalid={!!error}
             aria-describedby={error ? `${field}-error` : undefined}
+            aria-autocomplete="list"
+            autoComplete="off"
           />
           {suggestions?.field === field && suggestions.items.length > 0 && (
             <ul 
-              className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+              className="absolute z-50 w-full bg-white border border-gray-300 border-t-0 rounded-lg rounded-t-none shadow-xl max-h-60 overflow-auto"
               role="listbox"
+              style={{ 
+                backgroundColor: '#ffffff',
+                border: '1px solid #d1d5db',
+                borderTop: 'none',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                marginTop: '0'
+              }}
             >
               {suggestions.items.map((item, index) => (
                 <li
                   key={item.placeId || index}
-                  className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100"
+                  className="px-4 py-3 text-sm font-medium cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-150 ease-in-out hover:bg-blue-50"
+                  style={{
+                    color: '#1f2937',
+                    backgroundColor: '#ffffff'
+                  }}
                   onClick={() => handleLocationSelect(field, item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleLocationSelect(field, item);
+                    }
+                  }}
                   role="option"
+                  aria-selected="false"
+                  tabIndex={0}
                 >
-                  {item.display}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {item.isAirport ? (
+                          <span className="text-blue-600">✈️</span>
+                        ) : item.isTransit ? (
+                          <span className="text-green-600">🚂</span>
+                        ) : item.types?.includes('establishment') ? (
+                          <span className="text-purple-600">🏢</span>
+                        ) : (
+                          <span className="text-gray-600">📍</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium text-gray-900">
+                          {item.mainText || item.display}
+                        </div>
+                        {item.secondaryText && (
+                          <div className="truncate text-sm text-gray-500">
+                            {item.secondaryText}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {item.isAirport && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                          Airport
+                        </span>
+                      )}
+                      {item.isTransit && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                          Transit
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -427,10 +521,10 @@ export default function BookingWidget({
   // Render hourly package selector
   const renderHourlyPackages = () => (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor="package-selector" className="block text-sm font-medium text-gray-700 mb-2">
         Select Package
       </label>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3" role="radiogroup" aria-labelledby="package-selector">
         {HOURLY_PACKAGES.map((pkg) => (
           <div
             key={pkg.id}
@@ -445,6 +539,18 @@ export default function BookingWidget({
                 selectedPackage: pkg.id,
               }))
             }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setFormData((prev) => ({
+                  ...prev,
+                  selectedPackage: pkg.id,
+                }));
+              }
+            }}
+            role="radio"
+            aria-checked={formData.selectedPackage === pkg.id}
+            tabIndex={0}
           >
             <div className="font-medium">{pkg.name}</div>
             <div className="text-sm text-gray-600">
@@ -463,10 +569,11 @@ export default function BookingWidget({
   const renderAirportFields = () => (
     <>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Pickup From
-        </label>
-        <div className="flex space-x-4">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 mb-2">
+            Pickup From
+          </legend>
+          <div className="flex space-x-4">
           <label className="inline-flex items-center">
             <input
               type="radio"
@@ -500,6 +607,7 @@ export default function BookingWidget({
             <span className="ml-2 text-gray-700">City</span>
           </label>
         </div>
+        </fieldset>
       </div>
       <div className="mb-4">
         <label
@@ -575,12 +683,160 @@ export default function BookingWidget({
     );
   };
 
+  // Render call banner
+  const renderCallBanner = () => (
+    <div className="call-banner">
+      <style jsx>{`
+        .call-banner {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: 2px solid transparent;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .call-banner:hover {
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15), 0 15px 20px -3px rgba(239, 68, 68, 0.4);
+        }
+        
+        .call-banner:focus {
+          outline: none;
+          border-color: #fbbf24;
+          box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+        }
+        
+        .call-banner::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s;
+        }
+        
+        .call-banner:hover::before {
+          left: 100%;
+        }
+        
+        .call-icon {
+          font-size: 1.5rem;
+          animation: ring 2s infinite ease-in-out;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+        
+        .call-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .call-text {
+          color: white;
+          font-weight: 600;
+          font-size: 1.1rem;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .phone-number {
+          color: #fef3c7;
+          font-weight: 800;
+          font-size: 1.3rem;
+          letter-spacing: 0.1em;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .call-subtitle {
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 0.85rem;
+          font-weight: 500;
+          margin-top: 0.25rem;
+        }
+        
+        @keyframes ring {
+          0%, 100% { 
+            transform: rotate(0deg) scale(1); 
+          }
+          25% { 
+            transform: rotate(-15deg) scale(1.1); 
+          }
+          75% { 
+            transform: rotate(15deg) scale(1.1); 
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .call-banner {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+            padding: 1rem;
+          }
+          
+          .call-content {
+            gap: 0.5rem;
+          }
+          
+          .phone-number {
+            font-size: 1.2rem;
+          }
+        }
+      `}</style>
+      
+      <div className="call-icon">📞</div>
+      <div className="call-content">
+        <div className="call-text">Call Now for Instant Booking</div>
+        <div className="phone-number">+91 98765 43210</div>
+        <div className="call-subtitle">Available 24/7 • Best Rates Guaranteed</div>
+      </div>
+    </div>
+  );
+
+  // Handle call banner click
+  const handleCallClick = () => {
+    // Create tel: link for mobile devices
+    const phoneNumber = '+919876543210';
+    window.location.href = `tel:${phoneNumber}`;
+  };
+
+  // Handle keyboard navigation for call banner
+  const handleCallKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCallClick();
+    }
+  };
+
   // Render the main form
   return (
     <div className={`bg-white rounded-xl shadow-lg p-6 ${className}`}>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         Book Your Ride
       </h2>
+      
+      {/* Call Banner */}
+      <div 
+        onClick={handleCallClick}
+        onKeyDown={handleCallKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label="Call +91 98765 43210 for instant booking"
+      >
+        {renderCallBanner()}
+      </div>
       
       {renderTabs()}
       

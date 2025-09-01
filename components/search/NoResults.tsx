@@ -23,7 +23,7 @@ const NoResults: React.FC<NoResultsProps> = ({ onResetFilters }) => {
       </svg>
       <h3 className="mt-2 text-lg font-medium text-gray-900">No cabs available</h3>
       <p className="mt-1 text-sm text-gray-500">
-        We couldn't find any cabs matching your search criteria. Try adjusting your filters or search again.
+        We couldn&apos;t find any cabs matching your search criteria. Try adjusting your filters or search again.
       </p>
       <div className="mt-6">
         <button

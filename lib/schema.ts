@@ -28,22 +28,84 @@ export function faqJsonLd(faqs:{q:string;a:string;}[]){
 }
 
 // --- New schema helpers ---
-interface TaxiServiceSchemaInput { origin:string; destination:string; brand?:string; offers?:{ name:string; priceInr:number }[] }
-export function taxiServiceSchema({ origin, destination, brand=SITE_BRAND, offers=[] }: TaxiServiceSchemaInput){
+interface TaxiServiceSchemaInput { 
+  origin: string; 
+  destination: string; 
+  brand?: string; 
+  offers?: { name: string; priceInr: number }[];
+  distance?: number;
+  duration?: number; 
+  features?: string[];
+}
+export function taxiServiceSchema({ origin, destination, brand=SITE_BRAND, offers=[], distance, duration, features=[] }: TaxiServiceSchemaInput){
   devAssert(origin && destination, 'origin/destination required');
-  return {
-    '@context':'https://schema.org',
-    '@type':'TaxiService',
-    name: `${brand} ${origin} to ${destination} Taxi`,
-    provider: { '@type':'Organization', name: brand },
-    areaServed: [ origin, destination ],
-    serviceType: 'Intercity Cab',
-    hasOfferCatalog: offers.length ? {
-      '@type':'OfferCatalog',
-      name: `${origin} to ${destination} Fares`,
-      itemListElement: offers.map(o=>({ '@type':'Offer', name:o.name, priceCurrency:'INR', price:o.priceInr }))
-    } : undefined
+  
+  const cap = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
+  
+  const baseSchema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'TaxiService',
+    name: `${brand} ${cap(origin)} to ${cap(destination)} Taxi`,
+    provider: { 
+      '@type': 'Organization', 
+      name: brand,
+      url: SITE_BASE_URL
+    },
+    areaServed: [
+      {
+        '@type': 'City',
+        name: cap(origin),
+        addressCountry: 'IN'
+      },
+      {
+        '@type': 'City', 
+        name: cap(destination),
+        addressCountry: 'IN'
+      }
+    ],
+    serviceType: 'Intercity Cab Service',
+    description: `Professional taxi service from ${cap(origin)} to ${cap(destination)} with transparent pricing and reliable drivers.`,
+    url: `${SITE_BASE_URL}/${origin}/${destination}/fare`
   };
+
+  // Add distance if available
+  if (distance) {
+    baseSchema.distance = {
+      '@type': 'Distance',
+      value: distance,
+      unitCode: 'KMT'
+    };
+  }
+  
+  // Add duration if available
+  if (duration) {
+    baseSchema.estimatedDuration = `PT${duration}M`; // ISO 8601 duration format
+  }
+
+  // Add features if available
+  if (features.length > 0) {
+    baseSchema.amenityFeature = features.map(feature => ({
+      '@type': 'LocationFeatureSpecification',
+      name: feature
+    }));
+  }
+
+  // Add offers if available
+  if (offers.length > 0) {
+    baseSchema.hasOfferCatalog = {
+      '@type': 'OfferCatalog',
+      name: `${cap(origin)} to ${cap(destination)} Taxi Fares`,
+      itemListElement: offers.map(o => ({
+        '@type': 'Offer',
+        name: `${o.name} Taxi`,
+        priceCurrency: 'INR',
+        price: o.priceInr,
+        description: `${o.name} taxi from ${cap(origin)} to ${cap(destination)}`
+      }))
+    };
+  }
+
+  return baseSchema;
 }
 
 export function faqPageSchema(items:{ q:string; a:string }[]){

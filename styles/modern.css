@@ -1,0 +1,200 @@
+/* Global styles with TailwindCSS integration */
+@import './tailwind.css';
+
+/* Reset and normalize */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+/* Legacy compatibility - maintain existing classes while transitioning */
+.c-btn,
+.legacy-btn,
+button.legacy {
+  @apply btn btn-primary;
+}
+
+.c-btn--primary {
+  @apply btn-primary;
+}
+
+.c-btn--secondary {
+  @apply btn-secondary;
+}
+
+/* Enhanced site layout */
+.appShell {
+  @apply min-h-screen flex flex-col bg-neutral-50;
+}
+
+.siteHeader {
+  @apply bg-white shadow-sm border-b border-neutral-200 sticky top-0 z-40;
+}
+
+.siteHeader .inner {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16;
+}
+
+.brand {
+  @apply flex items-center space-x-3 text-primary-600 hover:text-primary-700 transition-colors text-xl font-bold;
+}
+
+.primaryNav {
+  @apply hidden md:flex items-center space-x-8;
+}
+
+.primaryNav a {
+  @apply text-neutral-600 hover:text-neutral-900 px-3 py-2 text-sm font-medium transition-colors rounded-lg;
+}
+
+.content {
+  @apply flex-1;
+}
+
+.siteFooter {
+  @apply bg-neutral-800 text-white mt-auto py-8;
+}
+
+.siteFooter p {
+  @apply text-center text-neutral-300;
+}
+
+/* Skip link for accessibility */
+.skip {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-lg z-50;
+}
+
+/* Legacy section classes - gradually migrate these */
+.hero-section {
+  @apply relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white;
+}
+
+.hero-content {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 text-center;
+}
+
+.hero-section h1 {
+  @apply text-4xl lg:text-6xl font-bold mb-6 leading-tight;
+}
+
+.hero-section p {
+  @apply text-xl lg:text-2xl text-primary-100 mb-8 leading-relaxed max-w-4xl mx-auto;
+}
+
+.booking-widget-container {
+  @apply mt-12 max-w-2xl mx-auto;
+}
+
+.hero-cta {
+  @apply mt-8;
+}
+
+.section-pad {
+  @apply py-16 lg:py-24;
+}
+
+.section-narrow {
+  @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.route-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.route-card {
+  @apply bg-white rounded-xl shadow-card hover:shadow-lg transition-all duration-200 p-6 border border-neutral-200 group block;
+}
+
+.route-card span {
+  @apply text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors block;
+}
+
+.route-card small {
+  @apply text-sm text-neutral-500 block mt-1;
+}
+
+.benefits-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 list-none;
+}
+
+.benefit-card {
+  @apply bg-white rounded-xl shadow-card hover:shadow-lg transition-shadow duration-200 p-6 text-center;
+}
+
+.benefit-card h3 {
+  @apply text-xl font-semibold text-neutral-900 mb-3;
+}
+
+.benefit-card p {
+  @apply text-neutral-600;
+}
+
+/* Form enhancements */
+input,
+select,
+textarea {
+  @apply transition-colors duration-200;
+}
+
+.error-msg {
+  @apply text-red-600 text-sm mt-1;
+}
+
+/* Utility classes for legacy compatibility */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bg-pattern {
+  background-image: 
+    radial-gradient(circle at 25px 25px, rgba(255,255,255,0.1) 2%, transparent 0%), 
+    radial-gradient(circle at 75px 75px, rgba(255,255,255,0.1) 2%, transparent 0%);
+  background-size: 100px 100px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Accessibility - reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  .card,
+  .route-card,
+  .benefit-card {
+    @apply border-2 border-neutral-900;
+  }
+}

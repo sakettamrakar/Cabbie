@@ -48,14 +48,19 @@ export function MobileFilterDrawer({
       {isOpen && (
         <div
           id="mobile-filters-panel"
-          className="fixed inset-0 z-50 bg-black/30"
+          className="fixed inset-0 z-50"
           role="dialog"
           aria-modal="true"
-          onClick={() => setIsOpen(false)}
         >
+          <button 
+            className="absolute inset-0 bg-black/30 cursor-default w-full h-full border-0 p-0 m-0" 
+            onClick={() => setIsOpen(false)}
+            aria-label="Close filters overlay"
+          />
           <div
             className="absolute bottom-0 left-0 right-0 h-[90vh] max-h-[90vh] bg-white rounded-t-xl shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            role="document"
+            tabIndex={-1}
           >
             <div className="p-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between">
               <h2 className="text-lg font-medium">Filters</h2>

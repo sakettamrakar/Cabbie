@@ -8,12 +8,13 @@ import FaqList, { Faq } from '../../../components/FaqList';
 import Layout from '../../../components/Layout';
 import { fetchRoutes, fetchRouteBySlugs, fetchContentToken, fetchRouteLastUpdated, disconnect } from '../../../lib/data';
 import { relatedRoutes } from '../../../lib/links';
-import { canonicalFare, metaDescriptionFare, canonicalSeo, SITE_BASE_URL, SITE_BRAND } from '../../../lib/seo';
+import { canonicalFare, metaDescriptionFare, canonicalSeo, SITE_BASE_URL, SITE_BRAND, buildMetaDescription } from '../../../lib/seo';
 import { alternateForReverseRoute } from '../../../lib/canon';
 import { faqJsonLd, taxiServiceSchema, breadcrumbSchema } from '../../../lib/schema';
 import { track } from '../../../lib/analytics/client';
 import { routePath, translate } from '../../../lib/i18n';
 import { titleVariantForRoute, buildFareTitle } from '../../../lib/ab';
+import { generateFallbackRouteData } from '../../../lib/fallback-routes';
 
 export const revalidate = 86400; // 24h ISR
 
@@ -38,10 +39,55 @@ export const getStaticPaths: GetStaticPaths = async ()=>{
 };
 
 export const getStaticProps: GetStaticProps<FarePageProps & { inactive?:boolean }> = async ({ params, preview }) => {
-  const origin = params?.origin as string; const destination = params?.destination as string;
+  const origin = params?.origin as string; 
+  const destination = params?.destination as string;
   const bundle = await fetchRouteBySlugs(origin,destination);
   const buildTime = new Date();
-  if(!bundle){ await disconnect(); return { props:{ origin, destination, distance:0, duration:0, fares:[], highlights:[], faqs:[], related:[], routeId:0, inactive:true, updatedOn: buildTime.toISOString() }, revalidate:3600 } as any; }
+  
+  if(!bundle){ 
+    // Try fallback route generation for programmatic SEO
+    const fallbackData = generateFallbackRouteData(origin, destination);
+    
+    if (fallbackData) {
+      console.log(`[fare:getStaticProps] Using fallback data for ${origin} → ${destination}`);
+      await disconnect(); 
+      return { 
+        props: {
+          origin: fallbackData.origin, 
+          destination: fallbackData.destination, 
+          distance: fallbackData.distance, 
+          duration: fallbackData.duration, 
+          fares: fallbackData.fares, 
+          highlights: fallbackData.highlights, 
+          faqs: fallbackData.faqs, 
+          related: fallbackData.related, 
+          routeId: fallbackData.routeId, 
+          inactive: false, // Programmatic routes are active
+          updatedOn: buildTime.toISOString() 
+        }, 
+        revalidate: 86400 
+      };
+    }
+    
+    // No fallback available
+    await disconnect(); 
+    return { 
+      props: { 
+        origin, 
+        destination, 
+        distance: 0, 
+        duration: 0, 
+        fares: [], 
+        highlights: [], 
+        faqs: [], 
+        related: [], 
+        routeId: 0, 
+        inactive: true, 
+        updatedOn: buildTime.toISOString() 
+      }, 
+      revalidate: 3600 
+    } as any; 
+  }
   const { route } = bundle;
   const hl = await fetchContentToken(`highlights:${origin}-${destination}`);
   const faqs = await fetchContentToken(`faqs:${origin}-${destination}`);
@@ -66,11 +112,20 @@ const BookingIsland = dynamic(()=>import('../../../components/booking/BookingIsl
 </div>});
 
 export default function FarePage({ origin, destination, distance, duration, fares, highlights, faqs, related, routeId, inactive, updatedOn }: FarePageProps & { inactive?:boolean }){
+  const cap = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
   const canonical = canonicalFare(origin,destination);
   const description = metaDescriptionFare(origin,destination,distance,duration);
   const faqLd = faqJsonLd(faqs);
   const offers = fares.map(f=>({ name: f.car_type, priceInr: f.base }));
-  const taxiSvc = taxiServiceSchema({ origin, destination, offers });
+  const features = ['Professional Driver', '24/7 Support', 'GPS Tracking', 'Toll Included'];
+  const taxiSvc = taxiServiceSchema({ 
+    origin, 
+    destination, 
+    offers,
+    distance,
+    duration,
+    features
+  });
   const breadcrumbs = breadcrumbSchema([
     { name:'Home', url: SITE_BASE_URL+'/' },
     { name: origin, url: `${SITE_BASE_URL}/city/${origin}` },
@@ -83,7 +138,15 @@ export default function FarePage({ origin, destination, distance, duration, fare
     try { const pathName = new URL(canonical).pathname; alternates.push({ href: SITE_BASE_URL + routePath('hi', pathName), hrefLang:'hi-IN' }); } catch {}
   }
   const variant = titleVariantForRoute(origin,destination);
-  const pageTitle = buildFareTitle(origin,destination, fares[0]?.base, variant, SITE_BRAND);
+  const pageTitle = `${cap(origin)} to ${cap(destination)} Taxi | Book One Way Cab from ₹${fares[0]?.base || 0}`;
+  const enhancedDescription = buildMetaDescription({
+    origin,
+    destination,
+    price: fares[0]?.base,
+    benefits: ['Professional Drivers', '24/7 Support', 'GPS Tracking'],
+    distance,
+    duration
+  });
   const [selectedCar, setSelectedCar] = useState<string>(fares[0]?.car_type || 'HATCHBACK');
   const [bookingVisible,setBookingVisible]=useState(false);
   const [liveFares,setLiveFares]=useState(fares);
@@ -131,16 +194,17 @@ export default function FarePage({ origin, destination, distance, duration, fare
   return (
   <Layout>
   <main role="main">
-  <HeadSeo title={pageTitle} description={description} canonical={canonical} robots={inactive? 'noindex,follow':'index,follow'} alternates={alternates}>
+  <HeadSeo title={pageTitle} description={enhancedDescription} canonical={canonical} robots={inactive? 'noindex,follow':'index,follow'} alternates={alternates}>
         <JsonLd data={jsonLd} />
       </HeadSeo>
       <header>
         <nav aria-label="Breadcrumb" className="breadcrumb"><ol style={{listStyle:'none',padding:0,margin:0,display:'flex',flexWrap:'wrap',gap:4}}>
           <li><a href="/">Home</a> /</li>
-          <li><a href={`/city/${origin}`}>{origin}</a> /</li>
-          <li aria-current="page"><strong>{origin} → {destination} Fare</strong></li>
+          <li><a href={`/city/${origin}`}>{cap(origin)}</a> /</li>
+          <li aria-current="page"><strong>{cap(origin)} → {cap(destination)} Fare</strong></li>
         </ol></nav>
-        <h1 style={{marginBottom:4}}>{origin} to {destination} Taxi Fare</h1>
+        <h1 style={{marginBottom:4}}>{cap(origin)} to {cap(destination)} Taxi Service</h1>
+        <h2 style={{marginBottom:8,fontSize:'1.2em',fontWeight:'normal'}}>Book {cap(origin)} to {cap(destination)} Cab - Fixed Fare from ₹{fares[0]?.base || 0}</h2>
   <p className="header-sub">{distance} km • ~{duration} mins • Fixed, all-inclusive</p>
   <p style={{fontSize:12,marginTop:4,color:'#555'}}>{translate('updated_on')} {new Date(updatedOn).toLocaleDateString('en-GB',{ day:'numeric', month:'long', year:'numeric' })}</p>
       </header>
@@ -187,13 +251,15 @@ export default function FarePage({ origin, destination, distance, duration, fare
         </noscript>
       </section>
       <section style={{marginTop:40}} aria-labelledby="highlightsHeading" className="no-shift h-160">
-        <h2 id="highlightsHeading">Why ride with us?</h2>
+        <h3 id="highlightsHeading">Why Choose {cap(origin)} to {cap(destination)} Taxi?</h3>
         {highlights?.length>0 ? <ul>{highlights.map((h,i)=><li key={i}>{h}</li>)}</ul> :
-          <div>
-            <div className="skeleton-line" style={{width:'60%'}} />
-            <div className="skeleton-line" style={{width:'70%'}} />
-            <div className="skeleton-line" style={{width:'55%'}} />
-          </div>}
+          <ul>
+            <li>Professional drivers with local route knowledge</li>
+            <li>24/7 customer support and GPS tracking</li>
+            <li>All-inclusive pricing with tolls and taxes</li>
+            <li>Doorstep pickup and drop service</li>
+            <li>Clean, well-maintained vehicles</li>
+          </ul>}
       </section>
       <section style={{marginTop:40}} aria-labelledby="relatedHeading" className="no-shift h-120">
         <h2 id="relatedHeading">Related Routes</h2>

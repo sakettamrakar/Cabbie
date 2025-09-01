@@ -30,7 +30,7 @@ export const getServerSideProps = async ({ params }) => {
     return { props: { id: b.id, status, car_type, fare_quote_inr, pickup_datetime: pickupDate.toISOString(), origin_text, destination_text, payment_mode, created_at: b.created_at.toISOString() } };
 };
 export default function BookingDetail(p) {
-    useEffect(() => { const eid = generateEventId(); track('booking_created', attachUtm({ origin: p.origin_text, destination: p.destination_text, car_type: p.car_type, fare: p.fare_quote_inr, booking_id: String(p.id), payment_mode: p.payment_mode || 'COD', event_id: eid })); }, []);
+    useEffect(() => { const eid = generateEventId(); track('booking_created', attachUtm({ origin: p.origin_text, destination: p.destination_text, car_type: p.car_type, fare: p.fare_quote_inr, booking_id: String(p.id), payment_mode: p.payment_mode || 'COD', event_id: eid })); }, [p.car_type, p.destination_text, p.fare_quote_inr, p.id, p.origin_text, p.payment_mode]);
     const pickupLocal = new Date(p.pickup_datetime).toLocaleString();
     const title = `Booking #${p.id} | ${p.origin_text} → ${p.destination_text}`;
     const description = `Confirmed booking #${p.id} ${p.origin_text} to ${p.destination_text} on ${pickupLocal} • ${p.car_type} • Fare ₹${p.fare_quote_inr} • Pay Cash on Pickup.`;
