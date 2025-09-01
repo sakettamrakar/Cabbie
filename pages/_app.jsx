@@ -1,3 +1,4 @@
+import '../styles/unified-design.css';
 import '../styles/professional.css';
 import { useEffect } from 'react';
 import Script from 'next/script';
@@ -6,6 +7,14 @@ import { useRouter } from 'next/router';
 export default function MyApp({ Component, pageProps }) {
     const router = useRouter();
     useEffect(() => {
+        // Load the Inter font
+        const fontLink = document.createElement('link');
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap';
+        fontLink.rel = 'stylesheet';
+        if (!document.querySelector('link[href*="fonts.googleapis.com"]')) {
+            document.head.appendChild(fontLink);
+        }
+        
         const id = 'late-css';
         if (!document.getElementById(id)) {
             const l = document.createElement('link');

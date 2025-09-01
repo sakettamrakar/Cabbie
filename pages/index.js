@@ -23,20 +23,42 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
       
       {/* Hero Section */}
       <section className="hero-gradient">
-        <div className="container py-20 text-center text-white">
-          <h1 className="text-5xl font-bold mb-6">
+        <div className="container py-20 text-center" style={{ color: 'white' }}>
+          <h1 className="animate-slideDown" style={{ 
+            fontSize: 'clamp(var(--text-3xl), 5vw, var(--text-5xl))',
+            fontWeight: 'var(--font-extrabold)',
+            marginBottom: 'var(--space-6)',
+            letterSpacing: '-0.025em',
+            color: 'white'
+          }}>
             {brandName} Intercity Cabs
           </h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto text-primary-100">
+          <p className="animate-fadeIn" style={{ 
+            fontSize: 'var(--text-xl)', 
+            marginBottom: 'var(--space-8)', 
+            maxWidth: 'var(--container-3xl)', 
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            color: 'rgba(255, 255, 255, 0.9)',
+            lineHeight: 'var(--leading-relaxed)'
+          }}>
             Reliable one-way taxi service connecting {cityCount}+ cities with transparent fares, instant booking, and professional drivers.
           </p>
           
-          <div className="max-w-2xl mx-auto mb-8">
+          <div className="animate-slideUp" style={{ 
+            maxWidth: 'var(--container-2xl)', 
+            margin: '0 auto var(--space-8) auto' 
+          }}>
             <ModernBookingWidget />
           </div>
           
-          <div className="space-x-4">
-            <a href="/modern-routes" className="btn btn-secondary">
+          <div className="animate-fadeIn" style={{ 
+            display: 'flex', 
+            gap: 'var(--space-4)', 
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <a href="/modern-routes" className="btn btn-secondary btn-lg">
               Browse All Routes
             </a>
           </div>
@@ -44,40 +66,77 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16" style={{ background: 'white' }}>
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 style={{ 
+              fontSize: 'clamp(var(--text-2xl), 4vw, var(--text-4xl))',
+              fontWeight: 'var(--font-bold)',
+              color: 'var(--neutral-900)',
+              marginBottom: 'var(--space-4)'
+            }}>
               Why Choose {brandName}?
             </h2>
-            <p className="text-lg text-gray-600">
+            <p style={{ 
+              fontSize: 'var(--text-lg)', 
+              color: 'var(--neutral-600)',
+              maxWidth: 'var(--container-2xl)',
+              margin: '0 auto'
+            }}>
               Experience the difference with our professional intercity taxi service
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="card text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚗</span>
+            <div className="card text-center" style={{ padding: 'var(--space-8)' }}>
+              <div className="icon-container mx-auto">
+                <span style={{ fontSize: 'var(--text-2xl)' }}>🚗</span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Professional Drivers</h3>
-              <p className="text-gray-600">Experienced, licensed drivers who know the routes well</p>
+              <h3 style={{ 
+                fontSize: 'var(--text-xl)', 
+                fontWeight: 'var(--font-semibold)', 
+                marginBottom: 'var(--space-3)',
+                color: 'var(--neutral-900)'
+              }}>Professional Drivers</h3>
+              <p style={{ 
+                color: 'var(--neutral-600)',
+                lineHeight: 'var(--leading-relaxed)',
+                margin: 0
+              }}>Experienced, licensed drivers who know the routes well</p>
             </div>
             
-            <div className="card text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💰</span>
+            <div className="card text-center" style={{ padding: 'var(--space-8)' }}>
+              <div className="icon-container mx-auto">
+                <span style={{ fontSize: 'var(--text-2xl)' }}>💰</span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Transparent Pricing</h3>
-              <p className="text-gray-600">No hidden fees, upfront pricing with detailed breakdowns</p>
+              <h3 style={{ 
+                fontSize: 'var(--text-xl)', 
+                fontWeight: 'var(--font-semibold)', 
+                marginBottom: 'var(--space-3)',
+                color: 'var(--neutral-900)'
+              }}>Transparent Pricing</h3>
+              <p style={{ 
+                color: 'var(--neutral-600)',
+                lineHeight: 'var(--leading-relaxed)',
+                margin: 0
+              }}>No hidden fees, upfront pricing with detailed breakdowns</p>
             </div>
             
-            <div className="card text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⚡</span>
+            <div className="card text-center" style={{ padding: 'var(--space-8)' }}>
+              <div className="icon-container mx-auto">
+                <span style={{ fontSize: 'var(--text-2xl)' }}>⚡</span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Instant Booking</h3>
-              <p className="text-gray-600">Quick OTP-based booking with instant confirmation</p>
+              <h3 style={{ 
+                fontSize: 'var(--text-xl)', 
+                fontWeight: 'var(--font-semibold)', 
+                marginBottom: 'var(--space-3)',
+                color: 'var(--neutral-900)'
+              }}>Instant Booking</h3>
+              <p style={{ 
+                color: 'var(--neutral-600)',
+                lineHeight: 'var(--leading-relaxed)',
+                margin: 0
+              }}>Quick OTP-based booking with instant confirmation</p>
             </div>
           </div>
         </div>
@@ -85,29 +144,55 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
 
       {/* Featured Routes */}
       {featuredRoutes && featuredRoutes.length > 0 && (
-        <section className="py-16 bg-gray-50">
+        <section className="py-16" style={{ background: 'var(--neutral-50)' }}>
           <div className="container">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 style={{ 
+                fontSize: 'clamp(var(--text-2xl), 4vw, var(--text-4xl))',
+                fontWeight: 'var(--font-bold)',
+                color: 'var(--neutral-900)',
+                marginBottom: 'var(--space-4)'
+              }}>
                 Popular Routes
               </h2>
-              <p className="text-lg text-gray-600">
+              <p style={{ 
+                fontSize: 'var(--text-lg)', 
+                color: 'var(--neutral-600)',
+                maxWidth: 'var(--container-2xl)',
+                margin: '0 auto'
+              }}>
                 Our most booked intercity routes
               </p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredRoutes.slice(0, 8).map((route) => (
-                <div key={route.id} className="card hover:shadow-lg transition-shadow">
-                  <h3 className="font-semibold text-lg mb-2">
+                <div key={route.id} className="card" style={{ 
+                  padding: 'var(--space-6)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%'
+                }}>
+                  <h3 style={{ 
+                    fontWeight: 'var(--font-semibold)', 
+                    fontSize: 'var(--text-lg)', 
+                    marginBottom: 'var(--space-3)',
+                    color: 'var(--neutral-900)'
+                  }}>
                     {route.origin.name} → {route.destination.name}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-3">
+                  <p style={{ 
+                    color: 'var(--neutral-600)', 
+                    fontSize: 'var(--text-sm)', 
+                    marginBottom: 'var(--space-4)',
+                    flex: 1
+                  }}>
                     Distance: {route.distance_km} km
                   </p>
                   <a 
                     href={`/${route.origin.slug}/${route.destination.slug}/fare`}
-                    className="btn btn-outline btn-sm w-full"
+                    className="btn btn-outline btn-sm"
+                    style={{ width: '100%' }}
                   >
                     Check Fare
                   </a>
