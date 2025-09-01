@@ -36,6 +36,19 @@ To verify your development environment is working correctly:
 - `make down` — stop containers
 - `make clean` — stop and remove containers, volumes, networks
 
+## Documentation
+- `docs/01-environment-setup.md` — Full development environment setup
+- `docs/CONFIGURATION_GUIDE.md` — **📖 Complete guide to updating fares, routes, and cities**
+- `docs/QUICK_REFERENCE.md` — **⚡ Quick reference for common updates**
+- `docs/UPDATE_EXAMPLE.md` — **💡 Step-by-step example: How to increase fares**
+- `docs/SEO_IMPLEMENTATION_COMPLETE.md` — **🚀 Programmatic SEO implementation & testing**
+- `docs/SEO_ANALYSIS.md` — **🔍 SEO analysis and enhancement plan**
+- `docs/DATA_HANDLING_GUIDE.md` — Distance calculation system overview
+- `docs/TROUBLESHOOTING.md` — Common issues and solutions
+
+**🚀 To update fares or routes, start with [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)**
+**🎯 For SEO testing and validation, see [SEO_IMPLEMENTATION_COMPLETE.md](docs/SEO_IMPLEMENTATION_COMPLETE.md)**
+
 See `docs/01-environment-setup.md` for the full handbook (what/why/acceptance).
 
 ## Minimal Local (No Docker/Admin) Path

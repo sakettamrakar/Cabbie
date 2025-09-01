@@ -1,30 +1,227 @@
-/* Non-critical styles (loaded after interaction) */
-/* Benefits section */
-.benefits-grid{display:grid;list-style:none;padding:0;margin:0;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
-.benefit-card{padding:16px 18px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);min-height:140px;}
-.benefit-card h3{margin:0 0 .5rem;font-size:1.05rem;}
-.benefit-card p{margin:0;color:#475569;font-size:14px;}
-/* Steps */
-.steps{display:grid;gap:28px;list-style:none;counter-reset:step;padding:0;margin:0;}
-.step-item{display:grid;grid-template-columns:32px 1fr;align-items:start;gap:12px;position:relative;}
-.step-badge{width:32px;height:32px;border-radius:50%;background:#334155;position:relative;}
-.step-item h3{margin:0 0 .4rem;font-size:1rem;}
-.step-item p{margin:0;color:#475569;font-size:14px;}
-/* Home hero adjustments rely on critical.css for base */
-/* Booking placeholder */
-.booking-placeholder{border:1px dashed #ccc;padding:24px;border-radius:6px;max-width:420px;}
-.booking-placeholder p{margin-top:0;font-size:14px;}
-/* Breadcrumb */
-.breadcrumb{font-size:12px;margin-bottom:8px;}
-.header-sub{margin-top:0;color:#555;}
-.section-pad{padding:3rem 1.5rem;}
-.section-narrow{max-width:1100px;margin:0 auto;}
-.fares-wrap{display:flex;gap:16px;flex-wrap:wrap;}
-.fare-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
-.book-btn{background:#036;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;}
-.book-btn:focus{outline:2px solid #094;}
-.booking-open-btn{background:#064;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;}
-.skeleton-grid{margin-top:8px;display:grid;gap:8px;}
-.skel{height:32px;background:#f1f5f9;border-radius:4px;}
-.skel-lg{height:40px;background:#e2e8f0;border-radius:4px;}
-.footer-meta{margin-top:60px;font-size:12px;color:#555;}
+/* Non-critical styles using theme system (loaded after interaction) */
+
+/* Benefits section using theme system */
+.benefits-grid {
+  display: grid;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.benefit-card {
+  padding: var(--space-6);
+  background-color: var(--color-bg-primary);
+  border: var(--border-width-thin) solid var(--color-gray-200);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-sm);
+  min-height: 140px;
+  transition: all var(--transition-fast);
+}
+
+.benefit-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-300);
+}
+
+.benefit-card h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.benefit-card p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Steps section using theme system */
+.steps {
+  display: grid;
+  gap: var(--space-7);
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0;
+}
+
+.step-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: start;
+  gap: var(--space-3);
+  position: relative;
+}
+
+.step-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-full);
+  background-color: var(--color-gray-700);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+
+.step-item h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.step-item p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Booking components using theme system */
+.booking-placeholder {
+  border: var(--border-width-thin) dashed var(--color-gray-300);
+  padding: var(--space-6);
+  border-radius: var(--border-radius-md);
+  max-width: 420px;
+  background-color: var(--color-bg-secondary);
+}
+
+.booking-placeholder p {
+  margin-top: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Navigation and layout using theme system */
+.breadcrumb {
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-2);
+  color: var(--color-text-tertiary);
+}
+
+.breadcrumb a {
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+}
+
+.header-sub {
+  margin-top: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.section-pad {
+  padding: var(--space-12) var(--space-6);
+}
+
+.section-narrow {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Fare components using theme system */
+.fares-wrap {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.fare-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.book-btn {
+  background-color: var(--color-primary-700);
+  color: var(--color-text-inverse);
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius-base);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.book-btn:hover {
+  background-color: var(--color-primary-800);
+}
+
+.book-btn:focus-visible {
+  outline: 2px solid var(--color-success);
+  outline-offset: 2px;
+}
+
+.booking-open-btn {
+  background-color: var(--color-primary-600);
+  color: var(--color-text-inverse);
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--border-radius-base);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: background-color var(--transition-fast);
+}
+
+.booking-open-btn:hover {
+  background-color: var(--color-primary-700);
+}
+
+/* Enhanced skeleton grid using theme system */
+.skeleton-grid {
+  margin-top: var(--space-2);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skel {
+  height: 32px;
+  background-color: var(--color-gray-100);
+  border-radius: var(--border-radius-base);
+}
+
+.skel-lg {
+  height: 40px;
+  background-color: var(--color-gray-200);
+  border-radius: var(--border-radius-base);
+}
+
+/* Footer using theme system */
+.footer-meta {
+  margin-top: var(--space-16);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: var(--space-4);
+}
+
+/* Responsive adjustments for late-loaded styles */
+@media (max-width: 600px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .section-pad {
+    padding: var(--space-8) var(--space-4);
+  }
+  
+  .fares-wrap {
+    flex-direction: column;
+  }
+}

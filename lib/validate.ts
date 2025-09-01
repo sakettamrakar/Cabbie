@@ -26,3 +26,54 @@ export const OTPIssueBody = z.object({ phone: z.string().regex(/^[0-9]{10}$/,'ph
 export const OTPVerifyBody = z.object({ phone:z.string().regex(/^[0-9]{10}$/,'phone must be 10 digits'), otp:z.string().length(4) });
 
 export type Infer<T extends z.ZodTypeAny> = z.infer<T>;
+
+// Phone number validation utilities
+export interface PhoneValidationResult {
+  isValid: boolean;
+  error?: string;
+  normalized?: string;
+}
+
+export const validatePhoneNumber = (phone: string): PhoneValidationResult => {
+  if (!phone || typeof phone !== 'string') {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+  
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Check if it starts with country code (91 for India)
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    const number = cleaned.slice(2); // Remove country code
+    if (/^[6-9]\d{9}$/.test(number)) {
+      return { isValid: true, normalized: number };
+    }
+  }
+  
+  // Check if it's a 10-digit Indian number
+  if (cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned)) {
+    return { isValid: true, normalized: cleaned };
+  }
+  
+  // Check if it's 11 digits starting with 0
+  if (cleaned.length === 11 && cleaned.startsWith('0')) {
+    const number = cleaned.slice(1);
+    if (/^[6-9]\d{9}$/.test(number)) {
+      return { isValid: true, normalized: number };
+    }
+  }
+  
+  return { 
+    isValid: false, 
+    error: 'Please enter a valid 10-digit Indian mobile number' 
+  };
+};
+
+export const formatPhoneDisplay = (phone: string): string => {
+  const validation = validatePhoneNumber(phone);
+  if (validation.isValid && validation.normalized) {
+    const num = validation.normalized;
+    return `+91 ${num.slice(0, 5)} ${num.slice(5)}`;
+  }
+  return phone;
+};

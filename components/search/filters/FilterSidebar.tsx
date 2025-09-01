@@ -120,7 +120,7 @@ export function FilterSidebar({ priceRange, onFilterChange, className = '' }: Fi
     
     // Notify parent component
     onFilterChange(filters);
-  }, [debouncedFilters, sortBy]);
+  }, [debouncedFilters, sortBy, filters, onFilterChange, pathname, router, searchParams]);
   
   const handleCarTypeChange = (carType: CarType, checked: boolean) => {
     setFilters(prev => ({

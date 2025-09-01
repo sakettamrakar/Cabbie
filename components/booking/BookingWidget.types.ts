@@ -7,6 +7,10 @@ export interface PlaceData {
   lat?: number;
   lng?: number;
   isAirport?: boolean;
+  isTransit?: boolean;
+  mainText?: string;
+  secondaryText?: string;
+  types?: string[];
 }
 
 export interface PackageOption {

@@ -44,12 +44,22 @@ export function buildTitleContent(origin:string,destination:string,brand:string,
   return `Reliable ${cap(origin)} to ${cap(destination)} Cabs | ${brand}`;
 }
 
-interface MetaDescriptionInput { origin:string; destination:string; price:number|string; benefits:string[]; }
-export function buildMetaDescription({ origin, destination, price, benefits }: MetaDescriptionInput){
-  ensure(origin,'origin'); ensure(destination,'destination'); ensure(String(price),'price');
-  const list = (benefits||[]).filter(Boolean).slice(0,3).join(', ');
-  const benefitPart = list ? ` Benefits: ${list}.` : '';
-  return `${cap(origin)} to ${cap(destination)} taxi fare from \u20B9${price}. Transparent pricing, instant booking.${benefitPart}`.trim();
+interface MetaDescriptionInput { 
+  origin: string; 
+  destination: string; 
+  price?: number | string; 
+  benefits?: string[];
+  distance?: number;
+  duration?: number;
+}
+export function buildMetaDescription({ origin, destination, price, benefits, distance, duration }: MetaDescriptionInput){
+  ensure(origin,'origin'); ensure(destination,'destination');
+  const priceText = price ? ` fixed fare ₹${price}` : '';
+  const distanceText = distance ? ` ${distance}km` : '';
+  const durationText = duration ? `, ${Math.floor(duration/60)}h journey` : '';
+  const list = (benefits || []).filter(Boolean).slice(0, 3).join(', ');
+  const benefitPart = list ? ` ${list}.` : '';
+  return `Book ${cap(origin)} to ${cap(destination)} cab at${priceText}.${distanceText}${durationText}. Toll & GST included, doorstep pickup.${benefitPart}`.trim();
 }
 
 export function canonicalForFare(origin:string,destination:string,domain:string){

@@ -20,16 +20,16 @@ interface SearchResultsProps {
 
 export default function SearchResults({ initialData, searchParams }: SearchResultsProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(!initialData);
-  const [error, setError] = useState<Error | null>(null);
-  const [results, setResults] = useState<SearchResultsData | null>(initialData);
   
   const {
+    results,
     filteredResults = [],
     filters,
     setFilters,
     sortBy,
     setSortBy,
+    isLoading,
+    error,
     activeFilterCount = 0,
   } = useSearchResults(initialData) || {};
 
@@ -47,41 +47,6 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
   };
 
   // Format distance for display (handles both string and number inputs)
-
-  // Fetch results if not provided via SSR
-  useEffect(() => {
-    if (initialData) return;
-
-    const fetchResults = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const query = new URLSearchParams({
-          origin: searchParams.origin as string,
-          destination: searchParams.destination as string,
-          pickup_datetime: searchParams.pickup_datetime as string,
-          ...(searchParams.return_datetime && { return_datetime: searchParams.return_datetime as string }),
-          ...(searchParams.passengers && { passengers: searchParams.passengers as string }),
-          ...(searchParams.luggage && { luggage: searchParams.luggage as string }),
-        }).toString();
-
-        const response = await fetch(`/api/quotes?${query}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch results');
-        }
-        
-        const data = await response.json();
-        setResults(data);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('An error occurred'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchResults();
-  }, [initialData, searchParams]);
 
   // Format date and time for display (detailed format)
   const formatDetailedDateTime = (dateTimeString: string) => {
@@ -119,7 +84,7 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
   // (removed legacy handleSelectCab)
 
   // Format distance for display (handles both string and number inputs)
-  const formatDistance = (distance: string | number, unit: string = 'mi'): string => {
+  const formatDistance = (distance: string | number, unit: string = 'km'): string => {
     try {
       const dist = typeof distance === 'string' ? parseFloat(distance) : distance;
       return `${dist.toFixed(1)} ${unit}`;
@@ -159,7 +124,7 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                {error.message || 'Failed to load search results. Please try again.'}
+                {error || 'Failed to load search results. Please try again.'}
               </p>
               <button
                 onClick={() => window.location.reload()}
@@ -256,93 +221,271 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
   // Format date and time for display (already defined above)
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      {/* Header */}
-      <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {origin.displayName} → {destination.displayName}
-        </h1>
+    <>
+      {/* Add consistent styling with the main site */}
+      <style jsx global>{`
+        .search-results-page {
+          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+          min-height: 100vh;
+          padding: 2rem 1rem;
+        }
         
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
-          <div className="flex items-center">
-            <svg className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {formattedDistance}
-          </div>
-          <div className="flex items-center">
-            <svg className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {duration}
-          </div>
-          <div className="flex items-center">
-            <svg className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {formattedDateTime.date} at {formattedDateTime.time}
-          </div>
-        </div>
+        .search-results-container {
+          max-width: 1000px;
+          margin: 0 auto;
+        }
         
-        <button
-          onClick={handleEditSearch}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-        >
-          <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          Edit Search
-        </button>
-      </header>
-
-      {/* Results */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Available Rides</h2>
+        .search-header-card {
+          background: white;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          padding: 1.5rem;
+          margin-bottom: 2rem;
+        }
         
-        <div className="space-y-4">
-          {cabOptions.map((cab) => (
-            <article key={cab.id} className="border rounded-lg overflow-hidden bg-white">
-              <div className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div className="mb-4 md:mb-0">
-                    <h3 className="text-lg font-semibold text-gray-900">{cab.category}</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {cab.carExamples.join(', ')}
-                    </p>
-                    <div className="flex items-center mt-2 text-sm text-gray-600">
-                      <span className="mr-4">👤 {cab.capacity} passengers</span>
-                      <span>⏱️ ~{cab.estimatedDuration}</span>
-                    </div>
-                    <ul className="mt-3 space-y-1 text-sm text-gray-600">
-                      {cab.features.map((feature, i) => (
-                        <li key={i} className="flex items-center">
-                          <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="flex flex-col items-end mt-4 md:mt-0">
-                    <div className="text-2xl font-bold text-gray-900 mb-2">
-                      ₹{cab.price.toLocaleString()}
-                    </div>
-                    <button
-                      onClick={() => handleCabSelect(cab)}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    >
-                      Select
-                    </button>
-                  </div>
-                </div>
+        .cab-result-card {
+          background: white;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
+          margin-bottom: 1rem;
+          transition: all 0.2s ease;
+        }
+        
+        .cab-result-card:hover {
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          transform: translateY(-1px);
+        }
+        
+        .select-cab-btn {
+          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+          color: white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.375rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .select-cab-btn:hover {
+          background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+          transform: translateY(-1px);
+        }
+        
+        .price-display {
+          color: #1e40af;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+        }
+        
+        .edit-search-btn {
+          color: #1e40af;
+          background: none;
+          border: 1px solid #1e40af;
+          padding: 0.5rem 1rem;
+          border-radius: 0.375rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .edit-search-btn:hover {
+          background: #1e40af;
+          color: white;
+        }
+        
+        @media (min-width: 768px) {
+          .search-results-page {
+            padding: 4rem 1rem;
+          }
+          
+          .search-header-card {
+            padding: 2rem;
+          }
+        }
+      `}</style>
+      
+      <div className="search-results-page">
+        <div className="search-results-container">
+          {/* Header */}
+          <header className="search-header-card">
+            <h1 style={{ 
+              fontSize: '1.875rem', 
+              fontWeight: '700', 
+              color: '#111827', 
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}>
+              {origin.displayName} → {destination.displayName}
+            </h1>
+            
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              justifyContent: 'center',
+              gap: '1.5rem', 
+              fontSize: '0.875rem', 
+              color: '#6B7280',
+              marginBottom: '1.5rem' 
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span>📍</span>
+                {formattedDistance}
               </div>
-            </article>
-          ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span>⏱️</span>
+                {duration}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span>📅</span>
+                {formattedDateTime.date} at {formattedDateTime.time}
+              </div>
+            </div>
+            
+            <div style={{ textAlign: 'center' }}>
+              <button onClick={handleEditSearch} className="edit-search-btn">
+                <span>✏️</span>
+                Edit Search
+              </button>
+            </div>
+          </header>
+
+          {/* Results Section */}
+          <section>
+            <h2 style={{ 
+              color: 'white', 
+              fontSize: '1.25rem', 
+              fontWeight: '600', 
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              Available Cabs ({cabOptions.length} options)
+            </h2>
+            
+            <div>
+              {cabOptions.map((cab) => (
+                <article key={cab.id} className="cab-result-card">
+                  <div style={{ padding: '1.5rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      gap: '1rem'
+                    }}>
+                      {/* Header with Category and Price */}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start'
+                      }}>
+                        <div>
+                          <h3 style={{ 
+                            fontSize: '1.25rem', 
+                            fontWeight: '600', 
+                            color: '#111827',
+                            marginBottom: '0.25rem'
+                          }}>
+                            {cab.category}
+                          </h3>
+                          <p style={{ 
+                            fontSize: '0.875rem', 
+                            color: '#6B7280',
+                            marginBottom: '0.5rem'
+                          }}>
+                            {cab.carExamples.join(' • ')}
+                          </p>
+                          <div style={{ 
+                            display: 'flex', 
+                            gap: '1rem', 
+                            fontSize: '0.875rem', 
+                            color: '#6B7280',
+                            marginBottom: '0.75rem'
+                          }}>
+                            <span>� {cab.capacity} seats</span>
+                            <span>⏰ {cab.estimatedDuration}</span>
+                            <span>⭐ {cab.rating}</span>
+                          </div>
+                        </div>
+                        
+                        <div style={{ textAlign: 'right' }}>
+                          <div className="price-display">
+                            ₹{cab.price.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Features and Actions */}
+                      <div>
+                        <div style={{ 
+                          display: 'flex', 
+                          flexWrap: 'wrap', 
+                          gap: '0.5rem 1rem',
+                          marginBottom: '1rem'
+                        }}>
+                          {cab.features.slice(0, 4).map((feature, i) => (
+                            <span key={i} style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#059669',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}>
+                              <span style={{ color: '#10B981' }}>✓</span>
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            gap: '1rem', 
+                            fontSize: '0.75rem', 
+                            color: '#6B7280'
+                          }}>
+                            <span style={{ 
+                              padding: '0.25rem 0.5rem', 
+                              background: cab.instantConfirmation ? '#DCFCE7' : '#FEF3C7',
+                              color: cab.instantConfirmation ? '#065F46' : '#92400E',
+                              borderRadius: '0.25rem'
+                            }}>
+                              {cab.instantConfirmation ? '⚡ Instant' : '⏳ On Request'}
+                            </span>
+                            <span style={{ 
+                              padding: '0.25rem 0.5rem', 
+                              background: '#F3F4F6',
+                              color: '#374151',
+                              borderRadius: '0.25rem'
+                            }}>
+                              {cab.cancellationPolicy === 'free' ? '🆓 Free Cancel' : 
+                               cab.cancellationPolicy === 'flexible' ? '🔄 Flexible' : '❌ Strict'}
+                            </span>
+                          </div>
+                          
+                          <button 
+                            onClick={() => handleCabSelect(cab)}
+                            className="select-cab-btn"
+                          >
+                            Select Cab
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }
