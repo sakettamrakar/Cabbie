@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 
 interface BookingWidgetProps {
   className?: string;
 }
 
 export default function ModernBookingWidget({ className = "" }: BookingWidgetProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     origin: '',
     destination: '',
-    pickupDate: '',
-    pickupTime: '',
+    pickupDate: new Date().toISOString().split('T')[0], // Today's date
+    pickupTime: (() => {
+      const now = new Date();
+      const nextHour = new Date(now.getTime() + 60 * 60 * 1000); // Add 1 hour
+      return nextHour.toTimeString().slice(0, 5); // Format as HH:MM
+    })(),
     passengers: '2'
   });
 
@@ -18,10 +25,39 @@ export default function ModernBookingWidget({ className = "" }: BookingWidgetPro
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Booking data:', formData);
+    
+    // Validate required fields
+    if (!formData.origin || !formData.destination || !formData.pickupDate || !formData.pickupTime) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Build search URL parameters
+      const searchParams = new URLSearchParams();
+      searchParams.set('origin', formData.origin);
+      searchParams.set('destination', formData.destination);
+      
+      // Combine date and time for pickup_datetime
+      const pickupDateTime = `${formData.pickupDate}T${formData.pickupTime}:00`;
+      searchParams.set('pickup_datetime', pickupDateTime);
+      searchParams.set('passengers', formData.passengers);
+      searchParams.set('trip_type', 'one-way');
+      
+      console.log('Navigating to search results with params:', searchParams.toString());
+      
+      // Navigate to search results page
+      await router.push(`/search-results?${searchParams.toString()}`);
+    } catch (error) {
+      console.error('Error during navigation:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -139,12 +175,17 @@ export default function ModernBookingWidget({ className = "" }: BookingWidgetPro
         {/* Submit Button */}
         <button
           type="submit"
-          className="btn btn-primary btn-xl w-full mt-6 group"
+          disabled={isLoading}
+          className={`btn btn-primary btn-xl w-full mt-6 group ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
         >
-          <svg className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : 'group-hover:translate-x-1'} transition-transform`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isLoading ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            )}
           </svg>
-          Search Available Cabs
+          {isLoading ? 'Searching...' : 'Search Available Cabs'}
         </button>
       </form>
 
