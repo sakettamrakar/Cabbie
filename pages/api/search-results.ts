@@ -7,7 +7,7 @@ const MOCK_CAB_OPTIONS: CabOption[] = [
     id: 'hatchback-1',
     category: 'Economy',
     carType: 'hatchback',
-    carExamples: ['Maruti Swift', 'Hyundai i20', 'Tata Tiago'],
+    carExamples: ['Maruti Swift', 'Maruti WagonR'],
     capacity: 4,
     features: ['AC', 'Music System', 'Clean Interior'],
     price: 0, // Will be calculated based on distance
@@ -22,7 +22,7 @@ const MOCK_CAB_OPTIONS: CabOption[] = [
     id: 'sedan-1',
     category: 'Comfort',
     carType: 'sedan',
-    carExamples: ['Honda City', 'Maruti Ciaz', 'Hyundai Verna'],
+    carExamples: ['Maruti Swift Dzire', 'Toyota Etios', 'Hyundai Aura'],
     capacity: 4,
     features: ['AC', 'Music System', 'Comfortable Seats', 'Extra Legroom'],
     price: 0, // Will be calculated
@@ -35,9 +35,9 @@ const MOCK_CAB_OPTIONS: CabOption[] = [
   },
   {
     id: 'suv-1',
-    category: 'Premium',
+    category: 'Premium — 7 Seater',
     carType: 'suv',
-    carExamples: ['Toyota Innova', 'Mahindra XUV700', 'Tata Safari'],
+    carExamples: ['Maruti Ertiga'],
     capacity: 7,
     features: ['AC', 'Music System', 'Spacious Interior', 'Premium Comfort', 'Extra Luggage Space'],
     price: 0, // Will be calculated
@@ -50,10 +50,10 @@ const MOCK_CAB_OPTIONS: CabOption[] = [
   },
   {
     id: 'luxury-1',
-    category: 'Luxury',
+    category: 'Luxury — 7 Seater',
     carType: 'luxury',
-    carExamples: ['Mercedes E-Class', 'BMW 5 Series', 'Audi A6'],
-    capacity: 4,
+    carExamples: ['Toyota Innova'],
+    capacity: 7,
     features: ['Premium AC', 'Premium Music System', 'Leather Seats', 'Chauffeur Service', 'Complimentary Water'],
     price: 0, // Will be calculated
     estimatedDuration: '0 mins',
