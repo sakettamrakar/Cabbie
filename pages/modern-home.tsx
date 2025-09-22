@@ -2,6 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import ModernLayout from '../components/ModernLayout';
 import ModernBookingWidget from '../components/ModernBookingWidget';
+import { SITE_BRAND } from '../lib/seo';
 
 // Sample data - replace with your actual data
 const featuredRoutes = [
@@ -185,7 +186,7 @@ export default function ModernHomePage() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">
-              Why Choose Cabbie?
+              Why Choose {SITE_BRAND}?
             </h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
               Experience the difference with our professional intercity taxi service designed for your comfort and safety.
@@ -247,7 +248,7 @@ export default function ModernHomePage() {
             Ready to Book Your Next Journey?
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied customers who trust Cabbie for their intercity travel needs.
+            Join thousands of satisfied customers who trust {SITE_BRAND} for their intercity travel needs.
           </p>
           <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
             <a href="/book" className="btn bg-white text-primary-600 hover:bg-neutral-100 btn-lg">
