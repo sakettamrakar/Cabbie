@@ -63,6 +63,13 @@ npm run db:seed
 npm run dev
 ```
 
+- Optional: configure Google Maps Platform (Maps JavaScript API + Places + Routes). Copy `.env.sample` → `.env` and set:
+  - `MAPS_ENABLED=true`
+  - `GOOGLE_MAPS_BROWSER_KEY=<restricted browser key>`
+  - `GOOGLE_MAPS_SERVER_KEY=<restricted server key>`
+  - `MAPS_REGION=IN`, `MAPS_LANGUAGE=en` (override for other locales)
+  - Keep `MAPS_ENABLED=false` to remain on the legacy, fully offline experience.
+
 - Visit http://localhost:3000/test → `it works ✅`.
 - API health: `curl http://localhost:3000/api/health` → `{ "ok": true }`.
 - Run `npm run dev:doctor` if setup fails (checks Docker, ports, env vars, Prisma).
@@ -96,6 +103,10 @@ Use TypeScript `.ts`/`.tsx` files for new code. Legacy `.js/.jsx` files exist fo
 - Server validates query params (`app/search-results/page.tsx`) and renders `<SearchResults />`.
 - Client hook fetches `/api/search-results`, which enriches mock cab options using `/api/distance/matrix` (Google API if keys exist, curated fallback otherwise).
 - Selecting a cab caches details (`lib/booking-utils.ts`) for the booking form.
+- Booking widget upgrades:
+  - Google Maps JS + Places Autocomplete enhances pickup/drop fields when `MAPS_ENABLED=true` (restricted keys required).
+  - `/api/resolve-place` resolves place IDs to coordinates, `/api/eta` uses Google Routes when available, otherwise falls back to curated estimates and Haversine heuristics.
+  - All flows remain backward compatible when Maps is disabled or unavailable.
 
 ### Admin Portal
 

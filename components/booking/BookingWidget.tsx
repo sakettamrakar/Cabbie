@@ -3,7 +3,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { debounce } from '../../lib/schedule';
-import { fetchLocationSuggestions, generateSessionToken } from '../../lib/places';
+import {
+  ensureSessionTokenObject,
+  fetchLocationSuggestions,
+  generateSessionToken,
+  resolvePlaceDetails
+} from '../../lib/places';
+import { loadGoogleMapsScript } from '../../lib/maps-client';
+import { isMapsEnabled } from '../../lib/maps';
 import { 
   TabType, 
   PlaceData, 
@@ -52,14 +59,16 @@ const TRIP_TABS: { id: TabType; label: string }[] = [
 
 const TIME_SLOTS = generateTimeSlots();
 
-export default function BookingWidget({ 
-  initialPickup = '', 
-  initialDrop = '', 
-  className = '' 
+export default function BookingWidget({
+  initialPickup = '',
+  initialDrop = '',
+  className = ''
 }: BookingWidgetProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  
+  const pickupInputRef = useRef<HTMLInputElement | null>(null);
+  const dropInputRef = useRef<HTMLInputElement | null>(null);
+
   // Form state
   const [activeTab, setActiveTab] = useState<TabType>('one-way');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +114,10 @@ export default function BookingWidget({
     field: 'pickup' | 'drop' | `stop-${number}`;
     items: PlaceData[];
   } | null>(null);
+
+  const mapsEnabled = isMapsEnabled('client');
+  const [mapsReady, setMapsReady] = useState(false);
+  const [mapsFailed, setMapsFailed] = useState(false);
   
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -125,7 +138,7 @@ export default function BookingWidget({
         setSuggestions(null);
         return;
       }
-      
+
       try {
         const results = await fetchLocationSuggestions(value, sessionToken);
         setSuggestions({
@@ -143,15 +156,182 @@ export default function BookingWidget({
   const handleLocationInputChange = useCallback((field: 'pickup' | 'drop' | `stop-${number}`, value: string) => {
     debouncedLocationSearch(field, value);
   }, [debouncedLocationSearch]);
-  
+
   // Handle location selection from suggestions
-  const handleLocationSelect = (field: 'pickup' | 'drop' | `stop-${number}`, place: PlaceData) => {
+  const handleLocationSelect = async (field: 'pickup' | 'drop' | `stop-${number}`, place: PlaceData) => {
+    let nextPlace = place;
+
+    if (place.placeId && mapsEnabled) {
+      try {
+        const resolved = await resolvePlaceDetails({
+          placeId: place.placeId,
+          rawText: place.display,
+          sessionToken,
+        });
+        nextPlace = {
+          ...place,
+          display: resolved.address || place.display,
+          lat: resolved.lat ?? undefined,
+          lng: resolved.lng ?? undefined,
+        };
+      } catch (error) {
+        console.warn('Failed to resolve place details, using suggestion payload', error);
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [field]: place
+      [field]: nextPlace
     }));
     setSuggestions(null);
   };
+
+  useEffect(() => {
+    if (!mapsEnabled || mapsFailed) {
+      return;
+    }
+
+    let mounted = true;
+    let pickupAutocomplete: any;
+    let dropAutocomplete: any;
+    let pickupListener: any;
+    let dropListener: any;
+
+    const attachAutocomplete = async () => {
+      try {
+        const googleNs = await loadGoogleMapsScript();
+        if (!mounted || !googleNs?.maps?.places) {
+          throw new Error('Google Places library unavailable');
+        }
+
+        const circle = new googleNs.maps.Circle({
+          center: { lat: 21.2514, lng: 81.6296 },
+          radius: 20000,
+        });
+        const baseOptions: any = {
+          fields: ['place_id', 'formatted_address', 'geometry'],
+          componentRestrictions: { country: ['in'] },
+          bounds: circle.getBounds?.()
+        };
+
+        const bindAutocomplete = (
+          input: HTMLInputElement | null,
+          field: 'pickup' | 'drop'
+        ) => {
+          if (!input) {
+            return { autocomplete: null, listener: null };
+          }
+
+          const autocomplete = new googleNs.maps.places.Autocomplete(input, { ...baseOptions });
+
+          const regenerateToken = async () => {
+            const { object, token } = await ensureSessionTokenObject();
+            if (object) {
+              autocomplete.setOptions({ sessionToken: object });
+            }
+            return token;
+          };
+
+          let currentToken: string | undefined;
+
+          const placeChanged = async () => {
+            const place = autocomplete.getPlace();
+            if (!place) {
+              return;
+            }
+            const baseAddress = place.formatted_address || input.value;
+            const payload = {
+              placeId: place.place_id ?? null,
+              rawText: baseAddress,
+              sessionToken: currentToken,
+            };
+
+            let resolved = await resolvePlaceDetails(payload);
+
+            if (!resolved.address) {
+              resolved = {
+                place_id: payload.placeId,
+                address: baseAddress,
+                lat: place.geometry?.location?.lat?.() ?? null,
+                lng: place.geometry?.location?.lng?.() ?? null,
+              };
+            }
+
+            setFormData(prev => ({
+              ...prev,
+              [field]: {
+                display: resolved.address || baseAddress,
+                placeId: resolved.place_id || payload.placeId || '',
+                lat: resolved.lat ?? undefined,
+                lng: resolved.lng ?? undefined,
+              }
+            }));
+            setSuggestions(null);
+            await regenerateToken();
+          };
+
+          const listener = autocomplete.addListener('place_changed', placeChanged);
+
+          const handleFocus = async () => {
+            currentToken = await regenerateToken();
+          };
+
+          const handleInput = () => {
+            if (!currentToken) {
+              regenerateToken().then(token => {
+                currentToken = token;
+              }).catch(() => {});
+            }
+          };
+
+          input.addEventListener('focus', handleFocus);
+          input.addEventListener('input', handleInput);
+
+          // Kick off initial token
+          regenerateToken().then(token => {
+            currentToken = token;
+          }).catch(() => {
+            currentToken = undefined;
+          });
+
+          return {
+            autocomplete,
+            listener,
+            cleanup: () => {
+              listener?.remove?.();
+              input.removeEventListener('focus', handleFocus);
+              input.removeEventListener('input', handleInput);
+            }
+          };
+        };
+
+        const pickupBindings = bindAutocomplete(pickupInputRef.current, 'pickup');
+        pickupAutocomplete = pickupBindings.autocomplete;
+        pickupListener = pickupBindings;
+
+        const dropBindings = bindAutocomplete(dropInputRef.current, 'drop');
+        dropAutocomplete = dropBindings.autocomplete;
+        dropListener = dropBindings;
+
+        setMapsReady(true);
+      } catch (error) {
+        console.warn('Google Maps Autocomplete setup failed', error);
+        if (mounted) {
+          setMapsFailed(true);
+        }
+      }
+    };
+
+    attachAutocomplete();
+
+    return () => {
+      mounted = false;
+      pickupListener?.cleanup?.();
+      dropListener?.cleanup?.();
+      pickupAutocomplete = null;
+      dropAutocomplete = null;
+    };
+  }, [mapsEnabled, mapsFailed, setFormData]);
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -301,6 +481,14 @@ export default function BookingWidget({
   ) => {
     const value = formData[field as keyof typeof formData] as PlaceData;
     
+    const inputRef = field === 'pickup'
+      ? pickupInputRef
+      : field === 'drop'
+        ? dropInputRef
+        : undefined;
+
+    const shouldUseLegacySuggestions = !mapsEnabled || mapsFailed || !mapsReady || field.startsWith('stop-');
+
     return (
       <div className="relative mb-4">
         <label htmlFor={field} className="block text-sm font-medium text-gray-700 mb-1">
@@ -315,22 +503,25 @@ export default function BookingWidget({
             onChange={(e) => {
               const newValue = { ...value, display: e.target.value };
               setFormData(prev => ({ ...prev, [field]: newValue }));
-              handleLocationInputChange(field, e.target.value);
+              if (shouldUseLegacySuggestions) {
+                handleLocationInputChange(field, e.target.value);
+              }
             }}
             placeholder={placeholder}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
               error ? 'border-red-500' : 'border-gray-300'
-            } ${suggestions?.field === field && suggestions.items.length > 0 ? 'rounded-b-none border-b-0' : ''}`}
+            } ${shouldUseLegacySuggestions && suggestions?.field === field && suggestions.items.length > 0 ? 'rounded-b-none border-b-0' : ''}`}
             aria-invalid={!!error}
             aria-describedby={error ? `${field}-error` : undefined}
             aria-autocomplete="list"
             autoComplete="off"
+            ref={inputRef as React.RefObject<HTMLInputElement> | undefined}
           />
-          {suggestions?.field === field && suggestions.items.length > 0 && (
-            <ul 
+          {shouldUseLegacySuggestions && suggestions?.field === field && suggestions.items.length > 0 && (
+            <ul
               className="absolute z-50 w-full bg-white border border-gray-300 border-t-0 rounded-lg rounded-t-none shadow-xl max-h-60 overflow-auto"
               role="listbox"
-              style={{ 
+              style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #d1d5db',
                 borderTop: 'none',
@@ -346,11 +537,11 @@ export default function BookingWidget({
                     color: '#1f2937',
                     backgroundColor: '#ffffff'
                   }}
-                  onClick={() => handleLocationSelect(field, item)}
+                  onClick={() => { void handleLocationSelect(field, item); }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleLocationSelect(field, item);
+                      void handleLocationSelect(field, item);
                     }
                   }}
                   role="option"
