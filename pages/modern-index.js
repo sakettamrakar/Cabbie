@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import ModernBookingWidget from '../components/ModernBookingWidget';
+import { SITE_BRAND } from '../lib/seo';
 
 // Sample data for benefits and steps
 const benefits = [
@@ -18,7 +19,8 @@ const steps = [
   { t:'Get Confirmation', d:'Driver assigned & details shared.' }
 ];
 
-export default function Home({ brandName, featuredRoutes, cityCount, routeCount }) {
+export default function Home({ featuredRoutes, cityCount, routeCount }) {
+  const brandName = SITE_BRAND;
   return (
     <main>
       <Head>
@@ -57,7 +59,7 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
 
       <section className="section-pad bg-neutral-50">
         <div className="container">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose {brandName}?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose {SITE_BRAND}?</h2>
           <ul className="benefits-grid">
             {benefits.map(b=> 
               <li key={b.t} className="benefit-card">
@@ -92,7 +94,6 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
 // Server-side props function
 export async function getServerSideProps() {
   // This would normally fetch from your database
-  const brandName = "Cabbie";
   const cityCount = 50;
   const routeCount = 200;
   
@@ -107,7 +108,6 @@ export async function getServerSideProps() {
 
   return {
     props: {
-      brandName,
       featuredRoutes,
       cityCount,
       routeCount,

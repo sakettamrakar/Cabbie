@@ -1,3 +1,4 @@
+import '../styles/theme.css';
 import '../styles/professional.css';
 import { useEffect } from 'react';
 import Script from 'next/script';

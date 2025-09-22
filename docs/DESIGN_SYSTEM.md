@@ -1,7 +1,7 @@
-# Cabbie Design System - Style Guide
+# RaipurToCabs Design System - Style Guide
 
 ## Overview
-This document outlines the comprehensive design system implemented for the Cabbie cab booking website. The system ensures consistency across all pages and components through standardized colors, typography, spacing, and utility classes.
+This document outlines the comprehensive design system implemented for the RaipurToCabs cab booking website. The system ensures consistency across all pages and components through standardized colors, typography, spacing, and utility classes.
 
 ## 🎨 **Design Tokens (CSS Custom Properties)**
 
@@ -415,4 +415,4 @@ input { @extend .form-input; }
 4. **Testing**: Automated visual regression testing
 5. **Optimization**: Bundle analysis and performance monitoring
 
-This design system provides a solid foundation for consistent, accessible, and maintainable styling across the entire Cabbie application.
+This design system provides a solid foundation for consistent, accessible, and maintainable styling across the entire RaipurToCabs application.

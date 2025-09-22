@@ -1,13 +1,13 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" role="img" aria-labelledby="cabbieLogoTitle cabbieLogoDesc">
-  <title id="cabbieLogoTitle">Cabbie</title>
-  <desc id="cabbieLogoDesc">Stylized wordmark for the Cabbie taxi booking service</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" role="img" aria-labelledby="rtcLogoTitle rtcLogoDesc">
+  <title id="rtcLogoTitle">RaipurToCabs</title>
+  <desc id="rtcLogoDesc">Stylized wordmark for the RaipurToCabs taxi booking service</desc>
   <defs>
-    <linearGradient id="cabbieGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="rtcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#2563eb"/>
       <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
   </defs>
   <rect x="0" y="8" width="36" height="24" rx="12" fill="#f59e0b"/>
   <path d="M18 14a6 6 0 100 12h10a2 2 0 100-4H18a2 2 0 010-4h10a2 2 0 100-4H18z" fill="#fff" opacity="0.9"/>
-  <text x="52" y="27" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="700" fill="url(#cabbieGradient)" letter-spacing="0.02em">Cabbie</text>
+  <text x="52" y="27" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="700" fill="url(#rtcGradient)" letter-spacing="0.02em">RaipurToCabs</text>
 </svg>

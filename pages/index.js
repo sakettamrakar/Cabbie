@@ -2,6 +2,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { PrismaClient } from '@prisma/client';
 import heroImage from '../src/assets/hero.jpg';
+import { SITE_BRAND } from '../lib/seo';
 
 // Dynamically import modern components with fallbacks
 const ModernLayout = dynamic(
@@ -15,12 +16,15 @@ const ModernBookingWidget = dynamic(
 );
 
 
-export default function Home({ brandName, featuredRoutes, cityCount, routeCount }) {
+export default function Home({ featuredRoutes, cityCount, routeCount }) {
   return (
-    <ModernLayout brandName={brandName}>
+    <ModernLayout>
       <Head>
-        <title>{brandName} Intercity Cabs | Professional Outstation & One Way Taxi</title>
-        <meta name="description" content={`Book reliable intercity ${brandName} taxis with transparent fares and instant OTP booking.`} />
+        <title>{SITE_BRAND} Intercity Cabs | Professional Outstation & One Way Taxi</title>
+        <meta
+          name="description"
+          content={`Book reliable intercity ${SITE_BRAND} taxis with transparent fares and instant OTP booking.`}
+        />
       </Head>
 
       {/* Hero Section */}
@@ -37,7 +41,7 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
               Transparent fares, instant booking across {cityCount}+ cities
             </h1>
             <p className="landing-hero__description">
-              {brandName} connects you to verified drivers for one-way, round trip and airport rides. Plan ahead with live price guarantees and 24x7 support.
+              {SITE_BRAND} connects you to verified drivers for one-way, round trip and airport rides. Plan ahead with live price guarantees and 24x7 support.
             </p>
             <div className="landing-hero__trust">
               <div className="landing-hero__trust-item">
@@ -92,7 +96,7 @@ export default function Home({ brandName, featuredRoutes, cityCount, routeCount 
       <section className="why-us">
         <div className="container">
           <div className="why-us__header">
-            <h2>Why choose {brandName}</h2>
+            <h2>Why choose {SITE_BRAND}</h2>
             <p>Trusted intercity rides with professional chauffeurs and transparent policies.</p>
           </div>
           <div className="why-us__grid">
@@ -182,7 +186,6 @@ export async function getStaticProps() {
     ]);
     return {
       props: {
-        brandName: process.env.BRAND_NAME || 'Raipur Cabs',
         featuredRoutes: routes.map((r) => ({
           id: r.id,
           origin: { slug: r.origin.slug, name: r.origin.name },

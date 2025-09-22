@@ -1,6 +1,6 @@
 import { CabOption, SearchQueryParams } from '@/types/search.types';
 
-const BOOKING_STORAGE_KEY = 'cabbie_booking_data';
+const BOOKING_STORAGE_KEY = 'raipurtocabs_booking_data';
 
 export interface BookingData {
   selectedCab: CabOption;

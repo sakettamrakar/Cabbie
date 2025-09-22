@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import SearchResults from '@/components/search/SearchResults';
+import { SITE_BRAND } from '@/lib/seo';
 // This function runs at build time to generate static params
 // For dynamic routes with SSG, you might want to implement this
 // export async function generateStaticParams() {
@@ -9,17 +10,17 @@ import SearchResults from '@/components/search/SearchResults';
 export async function generateMetadata({ searchParams, }) {
     const { origin = '', destination = '' } = searchParams;
     return {
-        title: `Cabs from ${origin} to ${destination} | Cabbie`,
-        description: `Find and book cabs from ${origin} to ${destination}. Compare prices, vehicle types, and book your ride in advance.`,
+        title: `Cabs from ${origin} to ${destination} | ${SITE_BRAND}`,
+        description: `Find and book cabs from ${origin} to ${destination} with ${SITE_BRAND}. Compare prices, vehicle types, and book your ride in advance.`,
         openGraph: {
-            title: `Cabs from ${origin} to ${destination} | Cabbie`,
-            description: `Book your cab from ${origin} to ${destination} at the best prices.`,
+            title: `Cabs from ${origin} to ${destination} | ${SITE_BRAND}`,
+            description: `Book your cab from ${origin} to ${destination} at the best prices with ${SITE_BRAND}.`,
             type: 'website',
         },
         twitter: {
             card: 'summary_large_image',
-            title: `Cabs from ${origin} to ${destination} | Cabbie`,
-            description: `Find and book cabs from ${origin} to ${destination} at the best prices.`,
+            title: `Cabs from ${origin} to ${destination} | ${SITE_BRAND}`,
+            description: `Find and book cabs from ${origin} to ${destination} at the best prices with ${SITE_BRAND}.`,
         },
     };
 }
