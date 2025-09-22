@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ModernLayout from '../components/ModernLayout';
+import { SITE_BRAND } from '../lib/seo';
 
 interface Route {
   id: number;
@@ -127,8 +128,8 @@ export default function ModernRoutes() {
 
   return (
     <ModernLayout
-      title="All Routes - Cabbie Intercity Taxi Service"
-      description="Browse all available intercity taxi routes with transparent pricing and instant booking."
+      title={`All Routes - ${SITE_BRAND} Intercity Taxi Service`}
+      description={`Browse all available intercity taxi routes with ${SITE_BRAND}. Transparent pricing and instant booking.`}
     >
       {/* Header Section */}
       <section className="bg-neutral-900 text-white py-12 lg:py-16">
@@ -201,80 +202,58 @@ export default function ModernRoutes() {
       {/* Routes Grid */}
       <section className="py-12 bg-neutral-50">
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid-3 route-grid">
             {filteredRoutes.map(route => (
-              <div key={route.id} className="card card-lg">
-                {/* Route Header */}
-                <div className="flex items-start justify-between mb-6">
+              <article key={route.id} className="card route-card">
+                <header className="route-card__header">
                   <div>
-                    <h2 className="text-2xl font-bold text-neutral-900 mb-2">
-                      {route.origin.name} → {route.destination.name}
-                    </h2>
-                    <div className="flex items-center space-x-4 text-neutral-600">
-                      <span className="flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        {route.distance_km} km
-                      </span>
-                      <span className="flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        ~{route.duration_hours}h
-                      </span>
-                    </div>
+                    <h2 className="route-card__title">{route.origin.name} → {route.destination.name}</h2>
+                    <p className="route-card__meta">
+                      <span>{route.distance_km} km</span>
+                      <span>~{route.duration_hours} hrs</span>
+                    </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary-600">
-                      ₹{route.base_price.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-neutral-500">Starting from</div>
+                  <div className="route-card__price">
+                    <strong>₹{route.base_price.toLocaleString()}</strong>
+                    <span className="muted">Starting fare</span>
                   </div>
-                </div>
+                </header>
 
-                {/* Car Types */}
-                <div className="space-y-3 mb-6">
-                  <h3 className="font-semibold text-neutral-900">Available Car Types:</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="route-card__body">
+                  <h3>Available car types</h3>
+                  <div className="route-card__car-grid">
                     {route.car_types.map(carType => (
-                      <div key={carType.type} className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
-                        <div className="font-medium text-neutral-900 mb-1">{carType.type}</div>
-                        <div className="text-primary-600 font-semibold mb-2">₹{carType.price.toLocaleString()}</div>
-                        <div className="space-y-1">
-                          {carType.features.map(feature => (
-                            <div key={feature} className="text-xs text-neutral-600 flex items-center">
-                              <svg className="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                              {feature}
-                            </div>
-                          ))}
+                      <div key={carType.type} className="route-card__car">
+                        <div className="route-card__car-title">
+                          {carType.type.charAt(0) + carType.type.slice(1).toLowerCase()}
                         </div>
+                        <div className="route-card__car-price">₹{carType.price.toLocaleString()}</div>
+                        <ul>
+                          {carType.features.map(feature => (
+                            <li key={feature}>{feature}</li>
+                          ))}
+                        </ul>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3">
+                <footer className="route-card__footer">
                   <a
                     href={`/${route.origin.slug}/${route.destination.slug}/fare`}
-                    className="btn btn-primary flex-1 text-center"
+                    className="cta cta--sm route-card__cta"
                   >
-                    View Details & Book
+                    See fare &amp; book
                   </a>
                   <a
                     href={`/${route.destination.slug}/${route.origin.slug}/fare`}
-                    className="btn btn-secondary"
+                    className="pill route-card__secondary"
                     title={`${route.destination.name} to ${route.origin.name}`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
+                    Route details
                   </a>
-                </div>
-              </div>
+                </footer>
+              </article>
             ))}
           </div>
 

@@ -1,6 +1,6 @@
 # Configuration & Update Guide
 
-This guide explains how to update fares, routes, cities, and other configurations in the Cabbie taxi booking system.
+This guide explains how to update fares, routes, cities, and other configurations in the RaipurToCabs taxi booking system.
 
 ## Table of Contents
 1. [Fare Management](#fare-management)

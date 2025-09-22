@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { getBookingData, clearBookingData, isBookingDataValid, formatPrice } from '@/lib/booking-utils';
 import { validatePhoneNumber, formatPhoneDisplay } from '@/lib/validate';
 import Layout from '@/components/Layout';
+import { SITE_BRAND } from '@/lib/seo';
 export default function BookingConfirmation() {
     const router = useRouter();
     const [bookingData, setBookingData] = useState(null);
@@ -118,7 +119,7 @@ export default function BookingConfirmation() {
     if (!bookingData) {
         return (<Layout>
         <Head>
-          <title>Loading... | Cabbie</title>
+          <title>Loading... | {SITE_BRAND}</title>
         </Head>
         <div className="max-w-2xl mx-auto p-4">
           <div className="flex items-center justify-center min-h-64">
@@ -146,7 +147,7 @@ export default function BookingConfirmation() {
     if (isBookingConfirmed) {
         return (<Layout>
         <Head>
-          <title>Booking Confirmed | Cabbie</title>
+          <title>Booking Confirmed | {SITE_BRAND}</title>
           <meta name="robots" content="noindex"/>
         </Head>
         
@@ -163,7 +164,7 @@ export default function BookingConfirmation() {
                     <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
                   </svg>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Cabbie</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{SITE_BRAND}</h1>
               </div>
               <p className="text-gray-600 text-lg">Your Trusted Travel Partner</p>
             </div>
@@ -352,7 +353,7 @@ export default function BookingConfirmation() {
     }
     return (<Layout>
       <Head>
-        <title>Confirm Your Booking | Cabbie</title>
+        <title>Confirm Your Booking | {SITE_BRAND}</title>
         <meta name="robots" content="noindex"/>
       </Head>
       
@@ -369,7 +370,7 @@ export default function BookingConfirmation() {
                   <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Cabbie</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{SITE_BRAND}</h1>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Confirm Your Booking</h2>
             <p className="text-gray-600 text-lg">Review your trip details and enter passenger information</p>

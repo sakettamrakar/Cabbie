@@ -6,7 +6,7 @@ Implemented a complete booking confirmation flow for the cab booking website wit
 ## 🎨 **UI/UX Enhancements**
 
 ### **1. Modern Booking Confirmation Page Design**
-- **Company Branding**: Cabbie logo with taxi icon prominently displayed
+- **Company Branding**: RaipurToCabs logo with taxi icon prominently displayed
 - **Progress Indicator**: 4-step visual progress (Search → Select → Confirm → Complete)
 - **Responsive Layout**: Desktop 3-column layout, mobile-optimized single column
 - **Premium Design**: Gradient backgrounds, rounded corners, shadow effects
@@ -31,7 +31,7 @@ Implemented a complete booking confirmation flow for the cab booking website wit
 ### 1. Enhanced Booking Confirmation Page (`/booking/confirmation`)
 - **Location**: `/pages/booking/confirmation.tsx`
 - **New UI Features**:
-  - Company branding header with Cabbie logo
+  - Company branding header with RaipurToCabs logo
   - 4-step progress indicator showing current stage
   - 3-column responsive layout (trip summary, form, sticky sidebar)
   - Enhanced form with icon-prefixed input fields

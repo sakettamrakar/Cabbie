@@ -53,13 +53,22 @@ interface MetaDescriptionInput {
   duration?: number;
 }
 export function buildMetaDescription({ origin, destination, price, benefits, distance, duration }: MetaDescriptionInput){
-  ensure(origin,'origin'); ensure(destination,'destination');
-  const priceText = price ? ` fixed fare ₹${price}` : '';
-  const distanceText = distance ? ` ${distance}km` : '';
-  const durationText = duration ? `, ${Math.floor(duration/60)}h journey` : '';
+  ensure(origin, 'origin');
+  ensure(destination, 'destination');
+
+  const intro = price
+    ? `Book ${cap(origin)} to ${cap(destination)} cab at fixed fare ₹${price}`
+    : `Book ${cap(origin)} to ${cap(destination)} cab with transparent fares`;
+
+  const detailBits: string[] = [];
+  if (distance) detailBits.push(`${distance}km`);
+  if (duration) detailBits.push(`${Math.floor(duration / 60)}h journey`);
+  const detailSentence = detailBits.length ? `${detailBits.join(' • ')}. ` : '';
+
   const list = (benefits || []).filter(Boolean).slice(0, 3).join(', ');
   const benefitPart = list ? ` ${list}.` : '';
-  return `Book ${cap(origin)} to ${cap(destination)} cab at${priceText}.${distanceText}${durationText}. Toll & GST included, doorstep pickup.${benefitPart}`.trim();
+
+  return `${intro}. ${detailSentence}Toll & GST included, doorstep pickup.${benefitPart}`.replace(/\s+/g, ' ').trim();
 }
 
 export function canonicalForFare(origin:string,destination:string,domain:string){

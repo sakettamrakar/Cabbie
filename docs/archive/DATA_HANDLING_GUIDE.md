@@ -1,10 +1,10 @@
-# Cabbie - Data Handling & Distance Calculation
+# RaipurToCabs - Data Handling & Distance Calculation
 
 > **🔧 For updating fares and routes, see [CONFIGURATION_GUIDE.md](./CONFIGURATION_GUIDE.md) and [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)**
 
 ## 📊 **Current System Overview**
 
-Your Cabbie app now has a **comprehensive 3-tier data handling system** that can handle any city combination:
+Your RaipurToCabs app now has a **comprehensive 3-tier data handling system** that can handle any city combination:
 
 ### 🎯 **Tier 1: Predefined Accurate Data** (100+ city pairs)
 - **Major routes**: Delhi-Mumbai (1400km), Bangalore-Chennai (350km)  
