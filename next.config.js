@@ -4,6 +4,12 @@ const nextConfig = {
   swcMinify: false,
   experimental: {
     esmExternals: false
+  },
+  env: {
+    MAPS_ENABLED: process.env.MAPS_ENABLED || 'false',
+    GOOGLE_MAPS_BROWSER_KEY: process.env.GOOGLE_MAPS_BROWSER_KEY || '',
+    MAPS_REGION: process.env.MAPS_REGION || 'IN',
+    MAPS_LANGUAGE: process.env.MAPS_LANGUAGE || 'en',
   }
 };
 
