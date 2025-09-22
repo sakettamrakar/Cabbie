@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type SVGProps } from 'react';
 import NoResults from '@/components/search/NoResults';
 import { useSearchResults } from '@/hooks/use-search-results';
 import { saveBookingData } from '@/lib/booking-utils';
+import { toTitleCase } from '@/lib/strings';
 import type {
   SearchResultsData,
   SearchQueryParams,
@@ -20,6 +21,82 @@ const SORT_OPTIONS: Array<{ value: SortValue; label: string }> = [
   { value: 'capacity_desc', label: 'Capacity: High to Low' },
   { value: 'capacity_asc', label: 'Capacity: Low to High' },
 ];
+
+type IconProps = SVGProps<SVGSVGElement>;
+
+function MapPinIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 21.75s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0c0 7.142-7.5 11.25-7.5 11.25z" />
+      <circle cx="12" cy="10.5" r="2.25" />
+    </svg>
+  );
+}
+
+function FlagIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M4.5 3v18" />
+      <path d="M4.5 5.25l4.5-1.5 4.5 1.5v9l-4.5-1.5-4.5 1.5" />
+    </svg>
+  );
+}
+
+function ClockIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5.25l3 1.5" />
+    </svg>
+  );
+}
+
+function CarIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+      <circle cx="7" cy="17" r="2" />
+      <path d="M9 17h6" />
+      <circle cx="17" cy="17" r="2" />
+    </svg>
+  );
+}
 
 interface SearchResultsProps {
   initialData: SearchResultsData | null;
@@ -66,6 +143,16 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
     error,
     activeFilterCount = 0,
   } = useSearchResults(initialData) || {};
+
+  const originLabel = useMemo(
+    () => toTitleCase(results?.origin?.displayName ?? searchParams.origin ?? ''),
+    [results?.origin?.displayName, searchParams.origin],
+  );
+
+  const destinationLabel = useMemo(
+    () => toTitleCase(results?.destination?.displayName ?? searchParams.destination ?? ''),
+    [results?.destination?.displayName, searchParams.destination],
+  );
 
   const summaryDate = results?.pickupDateTime ? formatDateParts(results.pickupDateTime) : '';
   const summaryDistance = results?.distance ? formatDistance(results.distance) : '';
@@ -173,19 +260,42 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
   }
 
   const displayDistance = summaryDistance ? `${summaryDistance}` : undefined;
+  const distanceDurationText = [displayDistance, results?.duration]
+    .filter(Boolean)
+    .join(' • ');
+  const pickupText = summaryDate ? `Pickup: ${summaryDate}` : '';
 
   return (
     <div className="search-results__container">
       <header className="card search-results__header" aria-live="polite">
         <div>
           <h1 className="search-results__title">
-            {results.origin.displayName} → {results.destination.displayName}
+            <span className="search-results__location">
+              <MapPinIcon className="icon-24" />
+              <span>{originLabel}</span>
+            </span>
+            <span className="search-results__arrow" aria-hidden="true">
+              →
+            </span>
+            <span className="search-results__location">
+              <FlagIcon className="icon-24" />
+              <span>{destinationLabel}</span>
+            </span>
           </h1>
-          <p className="search-results__meta">
-            {displayDistance && <span>{displayDistance}</span>}
-            {results.duration && <span>{results.duration}</span>}
-            {summaryDate && <span>{summaryDate}</span>}
-          </p>
+          <ul className="search-results__meta" role="list">
+            {distanceDurationText && (
+              <li>
+                <CarIcon className="icon-20" />
+                <span>{distanceDurationText}</span>
+              </li>
+            )}
+            {pickupText && (
+              <li>
+                <ClockIcon className="icon-20" />
+                <span>{pickupText}</span>
+              </li>
+            )}
+          </ul>
         </div>
         <button type="button" className="pill" onClick={handleEditSearch}>
           Edit search
