@@ -147,24 +147,25 @@ export default function BookingWidget({
   const [sessionToken] = useState(() => generateSessionToken());
   
   // Handle location input change with debounced suggestions
-  const debouncedLocationSearch = useCallback(
-    debounce(async (field: 'pickup' | 'drop' | `stop-${number}`, value: string) => {
-      if (value.length < 2) {
-        setSuggestions(null);
-        return;
-      }
+  const debouncedLocationSearch = useMemo(
+    () =>
+      debounce(async (field: 'pickup' | 'drop' | `stop-${number}`, value: string) => {
+        if (value.length < 2) {
+          setSuggestions(null);
+          return;
+        }
 
-      try {
-        const results = await fetchLocationSuggestions(value, sessionToken);
-        setSuggestions({
-          field,
-          items: results
-        });
-      } catch (error) {
-        console.error('Error fetching location suggestions:', error);
-        setSuggestions(null);
-      }
-    }, 300),
+        try {
+          const results = await fetchLocationSuggestions(value, sessionToken);
+          setSuggestions({
+            field,
+            items: results
+          });
+        } catch (error) {
+          console.error('Error fetching location suggestions:', error);
+          setSuggestions(null);
+        }
+      }, 300),
     [sessionToken]
   );
   
