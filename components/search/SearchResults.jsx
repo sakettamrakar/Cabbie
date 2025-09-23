@@ -5,6 +5,9 @@ import { useMemo } from 'react';
 import NoResults from '@/components/search/NoResults';
 import { useSearchResults } from '@/hooks/use-search-results';
 import { saveBookingData } from '@/lib/booking-utils';
+import { features } from '@/config/features';
+import { resolveCarExamples } from '@/lib/car-examples';
+import { toTitleCase } from '@/lib/strings';
 // NoResults imported from './NoResults'
 export default function SearchResults({ initialData, searchParams }) {
     const router = useRouter();
@@ -147,6 +150,17 @@ export default function SearchResults({ initialData, searchParams }) {
       </div>);
     }
     const { origin, destination, pickupDateTime, distance, duration, cabOptions } = results;
+    const originLabel = useMemo(() => {
+        const fallback = (origin === null || origin === void 0 ? void 0 : origin.displayName) ?? (searchParams === null || searchParams === void 0 ? void 0 : searchParams.origin) ?? '';
+        const formatted = toTitleCase(fallback);
+        return formatted || fallback;
+    }, [origin === null || origin === void 0 ? void 0 : origin.displayName, searchParams === null || searchParams === void 0 ? void 0 : searchParams.origin]);
+    const destinationLabel = useMemo(() => {
+        const fallback = (destination === null || destination === void 0 ? void 0 : destination.displayName) ?? (searchParams === null || searchParams === void 0 ? void 0 : searchParams.destination) ?? '';
+        const formatted = toTitleCase(fallback);
+        return formatted || fallback;
+    }, [destination === null || destination === void 0 ? void 0 : destination.displayName, searchParams === null || searchParams === void 0 ? void 0 : searchParams.destination]);
+    const { roofCarrierUI } = features;
     const formattedDateTime = formatDetailedDateTime(pickupDateTime);
     const formattedDistance = formatDistance(distance.toString());
     // Handle cab selection with proper typing
@@ -269,7 +283,7 @@ export default function SearchResults({ initialData, searchParams }) {
             marginBottom: '1rem',
             textAlign: 'center'
         }}>
-              {origin.displayName} → {destination.displayName}
+              {originLabel} → {destinationLabel}
             </h1>
             
             <div style={{
@@ -343,8 +357,45 @@ export default function SearchResults({ initialData, searchParams }) {
                 color: '#6B7280',
                 marginBottom: '0.5rem'
             }}>
-                            {cab.carExamples.join(' • ')}
+                            {resolveCarExamples(cab).join(' • ')}
                           </p>
+                          {roofCarrierUI && (
+                            <div
+                              role="note"
+                              title="Great for extra luggage"
+                              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: '#2563eb',
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.18)',
+                borderRadius: '999px',
+                padding: '0.25rem 0.75rem',
+                marginBottom: '0.5rem'
+            }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                                style={{ flexShrink: 0 }}
+                              >
+                                <circle cx="10" cy="10" r="8" />
+                                <path d="M10 10v4" />
+                                <circle cx="10" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+                              </svg>
+                              Roof carrier available starting @ ₹158
+                            </div>
+                          )}
                           <div style={{
                 display: 'flex',
                 gap: '1rem',

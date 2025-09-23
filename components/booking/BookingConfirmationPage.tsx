@@ -11,6 +11,7 @@ import {
 } from '@/lib/booking-utils';
 import { SITE_BRAND } from '@/lib/seo';
 import { formatPhoneDisplay, validatePhoneNumber } from '@/lib/validate';
+import { toTitleCase } from '@/lib/strings';
 import styles from '@/styles/BookingConfirmation.module.css';
 
 interface PassengerDetails {
@@ -159,6 +160,8 @@ const BookingConfirmationPage = () => {
   }
 
   const { selectedCab, searchParams } = bookingData;
+  const originLabel = toTitleCase(searchParams.origin ?? '') || searchParams.origin;
+  const destinationLabel = toTitleCase(searchParams.destination ?? '') || searchParams.destination;
   const pickupDate = new Date(searchParams.pickup_datetime);
   const formattedDate = pickupDate.toLocaleDateString('en-IN', {
     weekday: 'long',
@@ -194,7 +197,7 @@ const BookingConfirmationPage = () => {
               <header className={styles.successHeader}>
                 <div className={styles.successIconWrapper}>
                   <svg
-                    className={styles.successIcon}
+                    className={`${styles.successIcon} icon-24`}
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -227,7 +230,7 @@ const BookingConfirmationPage = () => {
                     <span className={styles.successDetailLabel}>Phone:</span> {displayPhone}
                   </p>
                   <p>
-                    <span className={styles.successDetailLabel}>Trip:</span> {searchParams.origin} → {searchParams.destination}
+                    <span className={styles.successDetailLabel}>Trip:</span> {originLabel} → {destinationLabel}
                   </p>
                 </div>
 
@@ -278,7 +281,7 @@ const BookingConfirmationPage = () => {
                 <div className={styles.tripSummaryHeader}>
                   <h2 className={styles.sectionTitle}>
                     <svg
-                      className={styles.sectionTitleIcon}
+                      className={`${styles.sectionTitleIcon} icon-24`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -293,7 +296,7 @@ const BookingConfirmationPage = () => {
                   </h2>
                   <span className={styles.fareBadge}>
                     <svg
-                      className={styles.fareIcon}
+                      className={`${styles.fareIcon} icon-20`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -312,17 +315,17 @@ const BookingConfirmationPage = () => {
                 </div>
 
                 <div className={styles.routeCard}>
-                  {searchParams.origin}
+                  {originLabel}
                   <span className={styles.routeArrow} aria-hidden="true">
                     →
                   </span>
-                  {searchParams.destination}
+                  {destinationLabel}
                 </div>
 
                 <div className={styles.summaryGrid}>
                   <div className={styles.summaryRow}>
                     <span className={`${styles.summaryIconCircle} ${styles.pickupIcon}`} aria-hidden="true">
-                      <svg className={styles.summaryIcon} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <svg className={`${styles.summaryIcon} icon-20`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path
                           fillRule="evenodd"
                           d="M10 2a6 6 0 016 6c0 4.418-6 10-6 10S4 12.418 4 8a6 6 0 016-6zm0 8a2 2 0 100-4 2 2 0 000 4z"
@@ -332,13 +335,13 @@ const BookingConfirmationPage = () => {
                     </span>
                     <div>
                       <p className={styles.summaryLabel}>Pickup</p>
-                      <p className={styles.summaryValue}>{searchParams.origin}</p>
+                      <p className={styles.summaryValue}>{originLabel}</p>
                     </div>
                   </div>
 
                   <div className={styles.summaryRow}>
                     <span className={`${styles.summaryIconCircle} ${styles.dropIcon}`} aria-hidden="true">
-                      <svg className={styles.summaryIcon} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <svg className={`${styles.summaryIcon} icon-20`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path
                           fillRule="evenodd"
                           d="M5.05 3.636a7 7 0 019.9 0C17.057 5.743 18 8.417 18 12a2 2 0 01-2 2h-1.586l-.707.707A1 1 0 0112 14.293V13a1 1 0 011-1h3c0-2.917-.743-4.9-2.05-6.364a5 5 0 00-7.9 0C4.743 7.1 4 9.083 4 12v5a1 1 0 01-1.447.894l-1-.5A1 1 0 011 16.5V12c0-3.583.943-6.257 3.05-8.364z"
@@ -348,14 +351,14 @@ const BookingConfirmationPage = () => {
                     </span>
                     <div>
                       <p className={styles.summaryLabel}>Drop</p>
-                      <p className={styles.summaryValue}>{searchParams.destination}</p>
+                      <p className={styles.summaryValue}>{destinationLabel}</p>
                     </div>
                   </div>
 
                   <div className={styles.summaryRow}>
                     <span className={`${styles.summaryIconCircle} ${styles.datetimeIcon}`} aria-hidden="true">
                       <svg
-                        className={styles.summaryIcon}
+                        className={`${styles.summaryIcon} icon-20`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -376,7 +379,7 @@ const BookingConfirmationPage = () => {
                   <div className={styles.summaryRow}>
                     <span className={`${styles.summaryIconCircle} ${styles.vehicleIcon}`} aria-hidden="true">
                       <svg
-                        className={styles.summaryIcon}
+                        className={`${styles.summaryIcon} icon-20`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -401,7 +404,7 @@ const BookingConfirmationPage = () => {
                   <div className={styles.summaryRow}>
                     <span className={`${styles.summaryIconCircle} ${styles.journeyIcon}`} aria-hidden="true">
                       <svg
-                        className={styles.summaryIcon}
+                        className={`${styles.summaryIcon} icon-20`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -424,7 +427,7 @@ const BookingConfirmationPage = () => {
                 <div className={styles.passengerIntro}>
                   <h2 className={styles.sectionTitle}>
                     <svg
-                      className={styles.sectionTitleIcon}
+                      className={`${styles.sectionTitleIcon} icon-24`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"

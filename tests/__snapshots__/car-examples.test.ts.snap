@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`car example fallbacks exposes mapping for snapshot guardrails 1`] = `
+{
+  "comfort": [
+    "Maruti Swift Dzire",
+    "Toyota Etios",
+    "Hyundai Aura",
+  ],
+  "economy": [
+    "Maruti Swift",
+    "Maruti WagonR",
+  ],
+  "luxury-7-seater": [
+    "Toyota Innova",
+  ],
+  "premium-7-seater": [
+    "Maruti Ertiga",
+  ],
+}
+`;
