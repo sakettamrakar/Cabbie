@@ -4,6 +4,8 @@ import ConsentBanner from './ConsentBanner';
 
 interface LayoutProps { children:any }
 export default function Layout({ children }:LayoutProps){
+  const showAdminLink =
+    process.env.NODE_ENV !== 'production' || process.env.ADMIN_LINK_ENABLED === 'true';
   return (
     <div className="appShell">
       <a href="#main" className="skip">Skip to content</a>
@@ -12,6 +14,9 @@ export default function Layout({ children }:LayoutProps){
           <a className="brand" href="/" aria-label={`${SITE_BRAND} home`}>{SITE_BRAND}</a>
           <nav aria-label="Primary" className="primaryNav">
             <a href="/routes">Routes</a>
+            {showAdminLink ? (
+              <a href="/admin/bookings" className="adminLink">Admin</a>
+            ) : null}
           </nav>
         </div>
       </header>

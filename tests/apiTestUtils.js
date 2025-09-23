@@ -1,6 +1,6 @@
 import { createMocks } from 'node-mocks-http';
-export async function runApi(handler, method, body) {
-    const { req, res } = createMocks({ method, body });
+export async function runApi(handler, method, body, options = {}) {
+    const { req, res } = createMocks({ method, body, query: options.query, headers: options.headers, cookies: options.cookies });
     await new Promise((resolve) => {
         // Support handlers returning a promise
         const maybe = handler(req, res);

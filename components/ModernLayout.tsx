@@ -16,6 +16,8 @@ export default function ModernLayout({
   description = `Book reliable intercity taxi service with ${SITE_BRAND}. Transparent pricing and professional drivers across India.`,
   className = ""
 }: LayoutProps) {
+  const showAdminLink =
+    process.env.NODE_ENV !== 'production' || process.env.ADMIN_LINK_ENABLED === 'true';
   return (
     <>
       <Head>
@@ -50,6 +52,9 @@ export default function ModernLayout({
               <a href="/routes" className="site-nav__link">Browse Routes</a>
               <a href="/about" className="site-nav__link">About</a>
               <a href="/contact" className="site-nav__link">Support</a>
+              {showAdminLink ? (
+                <a href="/admin/bookings" className="site-nav__link">Admin</a>
+              ) : null}
               <a href="/book" className="cta cta--sm">Book Now</a>
             </nav>
 

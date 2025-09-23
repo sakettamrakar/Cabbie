@@ -4,8 +4,11 @@ const config: Config = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleNameMapper: {
+    '\\.(css|less|scss|sass)$': '<rootDir>/tests/styleMock.ts',
+  },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   testTimeout: 15000,
