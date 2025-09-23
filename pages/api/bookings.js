@@ -106,6 +106,7 @@ export default withApi(async function handler(req, res) {
                 utm_campaign: utm_campaign || null
             } });
         const booking_id = booking.id;
+        console.info('[booking] persisted', { booking_id });
         // Server analytics event (dedup by idempotency already, still produce event_id for client)
         const event_id = generateEventId();
         const SALT = process.env.BOOKING_HASH_SALT || 's1';

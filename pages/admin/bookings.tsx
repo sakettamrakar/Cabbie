@@ -1,120 +1,267 @@
-import AdminLayout from '../../components/AdminLayout';
-import { useEffect, useState } from 'react';
-import { adminFetch } from '../../lib/adminFetch';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import Head from 'next/head';
+import type { GetServerSideProps, NextPage } from 'next';
+import { useRouter } from 'next/router';
+import styles from '../../styles/AdminBookings.module.css';
+import type { AdminAccessState } from '../../lib/simpleAdminKeyAuth';
+import { evaluateAdminAccess, getAdminKeyFromQuery } from '../../lib/simpleAdminKeyAuth';
 
-interface Booking { id:number; route:{ origin:{ slug:string }; destination:{ slug:string } }; pickup_datetime:string; car_type:string; customer_phone:string; status:string; assignments:{ driver:{ id:number; name:string } }[] }
-interface Driver { id:number; name:string; car_type:string; active:boolean; }
+type BookingRow = {
+  booking_id: number;
+  customer_name: string;
+  customer_phone: string;
+  origin: string;
+  destination: string;
+  pickup_datetime: string;
+  car_type: string;
+  fare: number;
+  status: string;
+  created_at: string;
+};
 
-export default function AdminBookings(){
-  const [bookings,setBookings]=useState<Booking[]>([]);
-  const [drivers,setDrivers]=useState<Driver[]>([]);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState<string|null>(null);
-  const [filters,setFilters]=useState<{id:string;phone:string;date:string;status:string}>({id:'',phone:'',date:'',status:''});
+type AdminBookingsPageProps = {
+  accessState: AdminAccessState;
+  initialKey: string | null;
+};
 
-  async function load(){
-    setLoading(true); setError(null);
+const PAGE_SIZE = 10;
+
+const statusLabelClass = (status: string): string => {
+  switch (status.toUpperCase()) {
+    case 'CONFIRMED':
+      return styles.statusConfirmed;
+    case 'CANCELLED':
+      return styles.statusCancelled;
+    default:
+      return styles.statusPending;
+  }
+};
+
+const formatDateTime = (value: string) => {
+  try {
+    return new Date(value).toLocaleString('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  } catch (error) {
+    return value;
+  }
+};
+
+const formatCurrency = (amount: number) => {
+  try {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+  } catch (error) {
+    return `₹${amount}`;
+  }
+};
+
+const AdminBookingsPage: NextPage<AdminBookingsPageProps> = ({ accessState, initialKey }) => {
+  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingKey, setPendingKey] = useState('');
+  const authKey = initialKey ?? '';
+
+  const totalPages = useMemo(() => {
+    return total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
+  }, [total]);
+
+  const fetchBookings = useCallback(async () => {
+    if (accessState !== 'granted') return;
+    setLoading(true);
+    setError(null);
+
     try {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([k,v])=>{ if(v) params.set(k,v); });
-      const [bRes,dRes] = await Promise.all([
-        fetch('/api/admin/bookings?'+params.toString()).then(r=>r.json()),
-        fetch('/api/admin/drivers').then(r=>r.json())
-      ]);
-      if(!bRes.ok) throw new Error(bRes.error||'Bookings fetch failed');
-      if(!dRes.ok) throw new Error(dRes.error||'Drivers fetch failed');
-      setBookings(bRes.bookings);
-      setDrivers(dRes.drivers.filter((d:any)=>d.active));
-    } catch(e:any){ setError(e.message); }
-    finally { setLoading(false); }
+      const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE),
+      });
+      if (authKey) {
+        query.append('key', authKey);
+      }
+      const response = await fetch(`/api/admin/bookings?${query.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      const payload = await response.json();
+      setBookings(payload.bookings || []);
+      setTotal(payload.total || 0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load bookings');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessState, page, authKey]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    setPendingKey('');
+  }, [accessState]);
+
+  const handleKeySubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const nextKey = pendingKey.trim();
+      router.replace({ pathname: '/admin/bookings', query: nextKey ? { key: nextKey } : {} });
+    },
+    [pendingKey, router],
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [authKey]);
+
+  const handlePrevPage = () => {
+    setPage((current) => Math.max(1, current - 1));
+  };
+
+  const handleNextPage = () => {
+    setPage((current) => Math.min(totalPages, current + 1));
+  };
+
+  const renderUnauthorized = () => {
+    if (accessState === 'forbidden') {
+      return (
+        <div className={styles.messageCard}>
+          <h2>Admin access disabled</h2>
+          <p>Set an <code>ADMIN_KEY</code> environment variable to enable this page in production.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.messageCard}>
+        <h2>Enter admin key</h2>
+        <p className={styles.messageSubtitle}>Provide the configured key to view recent bookings.</p>
+        <form onSubmit={handleKeySubmit} className={styles.keyForm}>
+          <label htmlFor="admin-key" className={styles.label}>Admin key</label>
+          <input
+            id="admin-key"
+            type="password"
+            value={pendingKey}
+            onChange={(event) => setPendingKey(event.target.value)}
+            placeholder="Enter ADMIN_KEY"
+            className={styles.input}
+            autoComplete="off"
+            required
+          />
+          <button type="submit" className={styles.submitButton}>Access dashboard</button>
+        </form>
+      </div>
+    );
+  };
+
+  const renderTable = () => {
+    if (loading) {
+      return <div className={styles.messageCard}>Loading bookings…</div>;
+    }
+    if (error) {
+      return <div className={styles.errorCard}>{error}</div>;
+    }
+    if (!bookings.length) {
+      return <div className={styles.messageCard}>No bookings found.</div>;
+    }
+
+    const start = (page - 1) * PAGE_SIZE + 1;
+    const end = Math.min(total, page * PAGE_SIZE);
+
+    return (
+      <div className={styles.tableSection}>
+        <div className={styles.tableMeta}>
+          Showing <strong>{start}</strong> – <strong>{end}</strong> of <strong>{total}</strong> bookings
+        </div>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Pickup</th>
+                <th>Car</th>
+                <th>Fare</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((booking) => (
+                <tr key={booking.booking_id}>
+                  <td>{booking.booking_id}</td>
+                  <td>{booking.customer_name || '—'}</td>
+                  <td>{booking.customer_phone}</td>
+                  <td>{booking.origin}</td>
+                  <td>{booking.destination}</td>
+                  <td>{formatDateTime(booking.pickup_datetime)}</td>
+                  <td>{booking.car_type}</td>
+                  <td>{formatCurrency(booking.fare)}</td>
+                  <td>
+                    <span className={`${styles.statusBadge} ${statusLabelClass(booking.status)}`}>
+                      {booking.status}
+                    </span>
+                  </td>
+                  <td>{formatDateTime(booking.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className={styles.pagination}>
+          <button type="button" onClick={handlePrevPage} disabled={page <= 1}>
+            Previous
+          </button>
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <button type="button" onClick={handleNextPage} disabled={page >= totalPages}>
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={styles.container}>
+      <Head>
+        <title>Admin Bookings</title>
+      </Head>
+      <main className={styles.main}>
+        <header className={styles.header}>
+          <div>
+            <h1 className={styles.title}>Bookings dashboard</h1>
+            <p className={styles.subtitle}>Latest confirmed requests sorted by most recent first.</p>
+          </div>
+        </header>
+        {accessState === 'granted' ? renderTable() : renderUnauthorized()}
+      </main>
+    </div>
+  );
+};
+
+export const getServerSideProps: GetServerSideProps<AdminBookingsPageProps> = async (context) => {
+  const key = getAdminKeyFromQuery(context.query as Record<string, string | string[] | undefined>) ?? null;
+  const accessState = evaluateAdminAccess(key);
+  if (accessState === 'missing-key') {
+    context.res.statusCode = 401;
+  } else if (accessState === 'forbidden') {
+    context.res.statusCode = 403;
   }
-  useEffect(()=>{ load(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[]);
+  return {
+    props: {
+      accessState,
+      initialKey: key,
+    },
+  };
+};
 
-  function applyFilters(e:React.FormEvent){ e.preventDefault(); load(); }
-  function resetFilters(){ setFilters({id:'',phone:'',date:'',status:''}); setTimeout(()=>load(),0); }
-
-  async function assignDriver(bookingId:number, driverId:number){
-  const res = await adminFetch('/api/admin/bookings/assign',{method:'POST',body:JSON.stringify({ booking_id:bookingId, driver_id:driverId })});
-    const j = await res.json();
-    if(!j.ok){ alert(j.error||'Assign failed'); return; }
-    load();
-  }
-
-  async function updateStatus(bookingId:number,status:string){
-  const res = await adminFetch('/api/admin/bookings/status',{method:'POST',body:JSON.stringify({ booking_id:bookingId, status })});
-    const j = await res.json();
-    if(!j.ok){ alert(j.error||'Status update failed'); return; }
-    load();
-  }
-
-  async function resend(bookingId:number){
-  const res = await adminFetch('/api/admin/bookings/resend',{method:'POST',body:JSON.stringify({ booking_id:bookingId })});
-    const j = await res.json();
-    if(!j.ok) alert(j.error||'Resend failed'); else alert(j.message);
-  }
-
-  return <AdminLayout title="Bookings">
-    {error && <p style={{color:'crimson'}}>{error}</p>}
-    <form onSubmit={applyFilters} style={{display:'flex',flexWrap:'wrap',gap:12,marginBottom:16}}>
-      <input placeholder="ID" value={filters.id} onChange={e=>setFilters(f=>({...f,id:e.target.value}))} style={filterInput} />
-      <input placeholder="Phone" value={filters.phone} onChange={e=>setFilters(f=>({...f,phone:e.target.value}))} style={filterInput} />
-      <input type="date" value={filters.date} onChange={e=>setFilters(f=>({...f,date:e.target.value}))} style={filterInput} />
-      <select value={filters.status} onChange={e=>setFilters(f=>({...f,status:e.target.value}))} style={filterInput}>
-        <option value="">Status</option>
-        <option>PENDING</option>
-        <option>ASSIGNED</option>
-        <option>COMPLETED</option>
-        <option>CANCELLED</option>
-      </select>
-      <button type="submit">Filter</button>
-      <button type="button" onClick={resetFilters}>Reset</button>
-    </form>
-    {loading? <p>Loading...</p> : <div style={{overflowX:'auto'}}>
-      <table style={{width:'100%',borderCollapse:'collapse'}}>
-        <thead>
-          <tr style={{background:'#f1f5f9'}}>
-            <th style={th}>ID</th>
-            <th style={th}>Route</th>
-            <th style={th}>Pickup</th>
-            <th style={th}>Car</th>
-            <th style={th}>Phone</th>
-            <th style={th}>Status</th>
-            <th style={th}>Assign Driver</th>
-            <th style={th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map(b=>{
-            const assigned = b.assignments[0]?.driver?.name;
-            return <tr key={b.id}>
-              <td style={td}>{b.id}</td>
-              <td style={td}>{b.route?.origin?.slug} → {b.route?.destination?.slug}</td>
-              <td style={td}>{new Date(b.pickup_datetime).toLocaleString()}</td>
-              <td style={td}>{b.car_type}</td>
-              <td style={td}>{b.customer_phone}</td>
-              <td style={td}>{b.status}</td>
-              <td style={td}>
-                {b.status==='COMPLETED'||b.status==='CANCELLED'? '—' : <select defaultValue="" onChange={e=>{ const val=e.target.value; if(val){ assignDriver(b.id, Number(val)); e.target.value=''; }}}>
-                  <option value="">{assigned? 'Reassign':'Assign'}</option>
-                  {drivers.filter(d=>d.car_type===b.car_type).map(d=> <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>}
-              </td>
-              <td style={td}>
-                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                  {b.status!=='CANCELLED' && b.status!=='COMPLETED' && <button type="button" onClick={()=>updateStatus(b.id,'CANCELLED')} style={{color:'#b00'}}>Cancel</button>}
-                  {b.status==='ASSIGNED' && <button type="button" onClick={()=>updateStatus(b.id,'COMPLETED')}>Complete</button>}
-                  <button type="button" onClick={()=>resend(b.id)}>Resend SMS</button>
-                </div>
-              </td>
-            </tr>;
-          })}
-        </tbody>
-      </table>
-    </div>}
-  </AdminLayout>;
-}
-
-const th:React.CSSProperties={textAlign:'left',padding:'8px 10px',fontWeight:500,fontSize:13,borderBottom:'1px solid #e2e8f0'};
-const td:React.CSSProperties={padding:'6px 10px',fontSize:13,borderBottom:'1px solid #f1f5f9'};
-const filterInput:React.CSSProperties={padding:'6px 8px',border:'1px solid #cbd5e1',borderRadius:4,fontSize:13};
+export default AdminBookingsPage;
