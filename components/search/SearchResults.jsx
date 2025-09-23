@@ -1,173 +1,142 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
-// Using native Date for formatting to avoid external deps
+import { useEffect, useMemo } from 'react';
+import { features } from '@/config/features';
 import NoResults from '@/components/search/NoResults';
 import { useSearchResults } from '@/hooks/use-search-results';
 import { saveBookingData } from '@/lib/booking-utils';
-import { features } from '@/config/features';
 import { resolveCarExamples } from '@/lib/car-examples';
 import { toTitleCase } from '@/lib/strings';
-// NoResults imported from './NoResults'
+const SORT_OPTIONS = [
+    { value: 'price_asc', label: 'Price: Low to High' },
+    { value: 'price_desc', label: 'Price: High to Low' },
+    { value: 'capacity_desc', label: 'Capacity: High to Low' },
+    { value: 'capacity_asc', label: 'Capacity: Low to High' },
+];
+function MapPinIcon(props) {
+    return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M12 21.75s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0c0 7.142-7.5 11.25-7.5 11.25z"/>
+      <circle cx="12" cy="10.5" r="2.25"/>
+    </svg>);
+}
+function FlagIcon(props) {
+    return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M4.5 3v18"/>
+      <path d="M4.5 5.25l4.5-1.5 4.5 1.5v9l-4.5-1.5-4.5 1.5"/>
+    </svg>);
+}
+function ClockIcon(props) {
+    return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7.5v5.25l3 1.5"/>
+    </svg>);
+}
+function CarIcon(props) {
+    return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+      <circle cx="7" cy="17" r="2"/>
+      <path d="M9 17h6"/>
+      <circle cx="17" cy="17" r="2"/>
+    </svg>);
+}
+function InfoIcon(props) {
+    return (<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <circle cx="10" cy="10" r="8"/>
+      <path d="M10 10v4"/>
+      <circle cx="10" cy="6.5" r="0.75" fill="currentColor" stroke="none"/>
+    </svg>);
+}
+const formatDateParts = (dateTimeString) => {
+    try {
+        const d = new Date(dateTimeString);
+        const formatted = d.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+        return formatted;
+    }
+    catch {
+        return dateTimeString;
+    }
+};
+const formatDistance = (distance) => {
+    if (distance === undefined || distance === null) {
+        return 'Distance unavailable';
+    }
+    const value = typeof distance === 'string' ? parseFloat(distance) : distance;
+    if (Number.isNaN(value)) {
+        return `${distance}`;
+    }
+    return `${value.toFixed(1)} km`;
+};
 export default function SearchResults({ initialData, searchParams }) {
+    var _a, _b;
     const router = useRouter();
-    const { results, filteredResults = [], filters, setFilters, sortBy, setSortBy, isLoading, error, activeFilterCount = 0, } = useSearchResults(initialData) || {};
-    // Format date and time for display
-    const formatDateTime = (dateTimeString) => {
-        try {
-            const d = new Date(dateTimeString);
-            return d.toLocaleString(undefined, {
-                year: 'numeric', month: 'short', day: 'numeric',
-                hour: 'numeric', minute: '2-digit', hour12: true,
-            });
+    const { results, filteredResults = [], setFilters, sortBy, setSortBy, isLoading, error, activeFilterCount = 0, } = useSearchResults(initialData) || {};
+    const originLabel = useMemo(() => {
+        var _a, _b, _c;
+        const fallback = (_c = (_b = (_a = results === null || results === void 0 ? void 0 : results.origin) === null || _a === void 0 ? void 0 : _a.displayName) !== null && _b !== void 0 ? _b : searchParams.origin) !== null && _c !== void 0 ? _c : '';
+        const formatted = toTitleCase(fallback);
+        return formatted || fallback;
+    }, [(_a = results === null || results === void 0 ? void 0 : results.origin) === null || _a === void 0 ? void 0 : _a.displayName, searchParams.origin]);
+    const destinationLabel = useMemo(() => {
+        var _a, _b, _c;
+        const fallback = (_c = (_b = (_a = results === null || results === void 0 ? void 0 : results.destination) === null || _a === void 0 ? void 0 : _a.displayName) !== null && _b !== void 0 ? _b : searchParams.destination) !== null && _c !== void 0 ? _c : '';
+        const formatted = toTitleCase(fallback);
+        return formatted || fallback;
+    }, [(_b = results === null || results === void 0 ? void 0 : results.destination) === null || _b === void 0 ? void 0 : _b.displayName, searchParams.destination]);
+    const { roofCarrierUI } = features;
+    const summaryDate = (results === null || results === void 0 ? void 0 : results.pickupDateTime) ? formatDateParts(results.pickupDateTime) : '';
+    const summaryDistance = (results === null || results === void 0 ? void 0 : results.distance) ? formatDistance(results.distance) : '';
+    const displayedOptions = useMemo(() => {
+        var _a;
+        if (!((_a = results === null || results === void 0 ? void 0 : results.cabOptions) === null || _a === void 0 ? void 0 : _a.length))
+            return [];
+        if (filteredResults && filteredResults.length > 0) {
+            return filteredResults;
         }
-        catch (e) {
-            return dateTimeString;
+        return results.cabOptions;
+    }, [filteredResults, results]);
+    useEffect(() => {
+        var _a;
+        if (!((_a = results === null || results === void 0 ? void 0 : results.cabOptions) === null || _a === void 0 ? void 0 : _a.length)) {
+            return;
         }
-    };
-    // Format distance for display (handles both string and number inputs)
-    // Format date and time for display (detailed format)
-    const formatDetailedDateTime = (dateTimeString) => {
         try {
-            const d = new Date(dateTimeString);
-            return {
-                date: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
-                time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }),
+            const analyticsEvent = {
+                event: 'quote_viewed',
+                origin: searchParams.origin,
+                destination: searchParams.destination,
+                pickup_datetime: searchParams.pickup_datetime,
+                option_count: results.cabOptions.length,
             };
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push(analyticsEvent);
         }
-        catch (e) {
-            return { date: dateTimeString, time: '' };
+        catch (err) {
+            console.warn('Analytics dispatch failed', err);
         }
-    };
-    // Handle filter changes with proper type safety
-    const handleFilterChange = (newFilters) => {
-        setFilters((prev) => ({
-            ...prev,
-            ...newFilters,
-        }));
-    };
-    // Reset all filters
+    }, [results, searchParams]);
     const resetFilters = () => {
-        setFilters({
+        setFilters === null || setFilters === void 0 ? void 0 : setFilters({
             carTypes: [],
             priceRange: [0, 10000],
             minCapacity: 1,
             instantConfirmation: false,
             freeCancellation: false,
         });
-        setSortBy('price_asc');
+        setSortBy === null || setSortBy === void 0 ? void 0 : setSortBy('price_asc');
     };
-    // (removed legacy handleSelectCab)
-    // Format distance for display (handles both string and number inputs)
-    const formatDistance = (distance, unit = 'km') => {
-        try {
-            const dist = typeof distance === 'string' ? parseFloat(distance) : distance;
-            return `${dist.toFixed(1)} ${unit}`;
-        }
-        catch (e) {
-            return `${distance} ${unit}`;
-        }
-    };
-    // Handle edit search click
     const handleEditSearch = () => {
         router.push('/');
     };
-    // Get price range for filter
-    const priceRange = useMemo(() => {
-        var _a;
-        if (!((_a = results === null || results === void 0 ? void 0 : results.cabOptions) === null || _a === void 0 ? void 0 : _a.length))
-            return [0, 10000];
-        const prices = results.cabOptions.map(cab => cab.price).filter(price => !isNaN(price));
-        if (!prices.length)
-            return [0, 10000];
-        return [
-            Math.floor(Math.min(...prices) / 100) * 100, // Round down to nearest 100
-            Math.ceil(Math.max(...prices) / 100) * 100, // Round up to nearest 100
-        ];
-    }, [results]);
-    // Handle error state
-    if (error) {
-        return (<div className="max-w-4xl mx-auto p-4">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">
-                {error || 'Failed to load search results. Please try again.'}
-              </p>
-              <button onClick={() => window.location.reload()} className="mt-2 text-sm font-medium text-red-700 hover:text-red-600">
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>);
-    }
-    // Show loading state
-    if (isLoading) {
-        return (<div className="max-w-4xl mx-auto p-4">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (<div key={i} className="p-4 border rounded-lg">
-                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-10 bg-gray-200 rounded w-1/4 mt-4"></div>
-                </div>
-              </div>))}
-          </div>
-        </div>
-      </div>);
-    }
-    // Show error state
-    if (error) {
-        return (<div className="max-w-4xl mx-auto p-4">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      </div>);
-    }
-    // Show no results state
-    if (!results || !results.cabOptions || results.cabOptions.length === 0) {
-        return (<div className="max-w-4xl mx-auto p-4">
-        <NoResults onResetFilters={resetFilters}/>
-      </div>);
-    }
-    const { origin, destination, pickupDateTime, distance, duration, cabOptions } = results;
-    const originLabel = useMemo(() => {
-        const fallback = (origin === null || origin === void 0 ? void 0 : origin.displayName) ?? (searchParams === null || searchParams === void 0 ? void 0 : searchParams.origin) ?? '';
-        const formatted = toTitleCase(fallback);
-        return formatted || fallback;
-    }, [origin === null || origin === void 0 ? void 0 : origin.displayName, searchParams === null || searchParams === void 0 ? void 0 : searchParams.origin]);
-    const destinationLabel = useMemo(() => {
-        const fallback = (destination === null || destination === void 0 ? void 0 : destination.displayName) ?? (searchParams === null || searchParams === void 0 ? void 0 : searchParams.destination) ?? '';
-        const formatted = toTitleCase(fallback);
-        return formatted || fallback;
-    }, [destination === null || destination === void 0 ? void 0 : destination.displayName, searchParams === null || searchParams === void 0 ? void 0 : searchParams.destination]);
-    const { roofCarrierUI } = features;
-    const formattedDateTime = formatDetailedDateTime(pickupDateTime);
-    const formattedDistance = formatDistance(distance.toString());
-    // Handle cab selection with proper typing
     const handleCabSelect = (cab) => {
         if (!results)
             return;
-        // booking-utils.saveBookingData adds timestamp; pass required fields only
         saveBookingData({
             selectedCab: cab,
             searchParams: {
@@ -181,302 +150,124 @@ export default function SearchResults({ initialData, searchParams }) {
         });
         router.push(`/booking/confirmation?cabId=${encodeURIComponent(cab.id)}`);
     };
-    // (features rendering handled inline below)
-    // Format date and time for display (already defined above)
-    return (<>
-      {/* Add consistent styling with the main site */}
-      <style jsx global>{`
-        .search-results-page {
-          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-          min-height: 100vh;
-          padding: 2rem 1rem;
-        }
-        
-        .search-results-container {
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-        
-        .search-header-card {
-          background: white;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          padding: 1.5rem;
-          margin-bottom: 2rem;
-        }
-        
-        .cab-result-card {
-          background: white;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          overflow: hidden;
-          margin-bottom: 1rem;
-          transition: all 0.2s ease;
-        }
-        
-        .cab-result-card:hover {
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-          transform: translateY(-1px);
-        }
-        
-        .select-cab-btn {
-          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-          color: white;
-          border: none;
-          padding: 0.75rem 1.5rem;
-          border-radius: 0.375rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .select-cab-btn:hover {
-          background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-          transform: translateY(-1px);
-        }
-        
-        .price-display {
-          color: #1e40af;
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-        }
-        
-        .edit-search-btn {
-          color: #1e40af;
-          background: none;
-          border: 1px solid #1e40af;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        
-        .edit-search-btn:hover {
-          background: #1e40af;
-          color: white;
-        }
-        
-        @media (min-width: 768px) {
-          .search-results-page {
-            padding: 4rem 1rem;
-          }
-          
-          .search-header-card {
-            padding: 2rem;
-          }
-        }
-      `}</style>
-      
-      <div className="search-results-page">
-        <div className="search-results-container">
-          {/* Header */}
-          <header className="search-header-card">
-            <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '1rem',
-            textAlign: 'center'
-        }}>
-              {originLabel} → {destinationLabel}
-            </h1>
-            
-            <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '1.5rem',
-            fontSize: '0.875rem',
-            color: '#6B7280',
-            marginBottom: '1.5rem'
-        }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <span>📍</span>
-                {formattedDistance}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <span>⏱️</span>
-                {duration}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <span>📅</span>
-                {formattedDateTime.date} at {formattedDateTime.time}
-              </div>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <button onClick={handleEditSearch} className="edit-search-btn">
-                <span>✏️</span>
-                Edit Search
-              </button>
-            </div>
-          </header>
-
-          {/* Results Section */}
-          <section>
-            <h2 style={{
-            color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            marginBottom: '1.5rem',
-            textAlign: 'center'
-        }}>
-              Available Cabs ({cabOptions.length} options)
-            </h2>
-            
-            <div>
-              {cabOptions.map((cab) => (<article key={cab.id} className="cab-result-card">
-                  <div style={{ padding: '1.5rem' }}>
-                    <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem'
-            }}>
-                      {/* Header with Category and Price */}
-                      <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start'
-            }}>
-                        <div>
-                          <h3 style={{
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '0.25rem'
-            }}>
-                            {cab.category}
-                          </h3>
-                          <p style={{
-                fontSize: '0.875rem',
-                color: '#6B7280',
-                marginBottom: '0.5rem'
-            }}>
-                            {resolveCarExamples(cab).join(' • ')}
-                          </p>
-                          {roofCarrierUI && (
-                            <div
-                              role="note"
-                              title="Great for extra luggage"
-                              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.375rem',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: '#2563eb',
-                background: 'rgba(59, 130, 246, 0.08)',
-                border: '1px solid rgba(59, 130, 246, 0.18)',
-                borderRadius: '999px',
-                padding: '0.25rem 0.75rem',
-                marginBottom: '0.5rem'
-            }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                                style={{ flexShrink: 0 }}
-                              >
-                                <circle cx="10" cy="10" r="8" />
-                                <path d="M10 10v4" />
-                                <circle cx="10" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
-                              </svg>
-                              Roof carrier available starting @ ₹158
-                            </div>
-                          )}
-                          <div style={{
-                display: 'flex',
-                gap: '1rem',
-                fontSize: '0.875rem',
-                color: '#6B7280',
-                marginBottom: '0.75rem'
-            }}>
-                            <span>� {cab.capacity} seats</span>
-                            <span>⏰ {cab.estimatedDuration}</span>
-                            <span>⭐ {cab.rating}</span>
-                          </div>
-                        </div>
-                        
-                        <div style={{ textAlign: 'right' }}>
-                          <div className="price-display">
-                            ₹{cab.price.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Features and Actions */}
-                      <div>
-                        <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.5rem 1rem',
-                marginBottom: '1rem'
-            }}>
-                          {cab.features.slice(0, 4).map((feature, i) => (<span key={i} style={{
-                    fontSize: '0.75rem',
-                    color: '#059669',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                }}>
-                              <span style={{ color: '#10B981' }}>✓</span>
-                              {feature}
-                            </span>))}
-                        </div>
-                        
-                        <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                          <div style={{
-                display: 'flex',
-                gap: '1rem',
-                fontSize: '0.75rem',
-                color: '#6B7280'
-            }}>
-                            <span style={{
-                padding: '0.25rem 0.5rem',
-                background: cab.instantConfirmation ? '#DCFCE7' : '#FEF3C7',
-                color: cab.instantConfirmation ? '#065F46' : '#92400E',
-                borderRadius: '0.25rem'
-            }}>
-                              {cab.instantConfirmation ? '⚡ Instant' : '⏳ On Request'}
-                            </span>
-                            <span style={{
-                padding: '0.25rem 0.5rem',
-                background: '#F3F4F6',
-                color: '#374151',
-                borderRadius: '0.25rem'
-            }}>
-                              {cab.cancellationPolicy === 'free' ? '🆓 Free Cancel' :
-                cab.cancellationPolicy === 'flexible' ? '🔄 Flexible' : '❌ Strict'}
-                            </span>
-                          </div>
-                          
-                          <button onClick={() => handleCabSelect(cab)} className="select-cab-btn">
-                            Select Cab
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>))}
-            </div>
-          </section>
+    if (error) {
+        return (<div className="search-results__container">
+        <div className="card search-results__message search-results__message--error" role="alert">
+          <h2>We hit a speed bump</h2>
+          <p>{error || 'Failed to load search results. Please try again.'}</p>
+          <button type="button" className="cta cta--sm" onClick={() => router.refresh()}>
+            Retry search
+          </button>
         </div>
+      </div>);
+    }
+    if (isLoading) {
+        return (<div className="search-results__container">
+        <header className="card search-results__header">
+          <div>
+            <div className="skeleton skeleton-text" style={{ width: '12rem' }}></div>
+            <div className="skeleton skeleton-text" style={{ width: '16rem', marginTop: '0.5rem' }}></div>
+          </div>
+        </header>
+        <div className="search-results__list">
+          {Array.from({ length: 3 }).map((_, index) => (<article key={index} className="card search-card">
+              <div className="skeleton skeleton-text" style={{ width: '10rem', marginBottom: '0.75rem' }}></div>
+              <div className="skeleton skeleton-text" style={{ width: '18rem', marginBottom: '0.75rem' }}></div>
+              <div className="skeleton skeleton-button" style={{ width: '8rem' }}></div>
+            </article>))}
+        </div>
+      </div>);
+    }
+    if (!results || !results.cabOptions || results.cabOptions.length === 0) {
+        return (<div className="search-results__container">
+        <NoResults onResetFilters={resetFilters}/>
+      </div>);
+    }
+    const displayDistance = summaryDistance ? `${summaryDistance}` : undefined;
+    const distanceDurationText = [displayDistance, results === null || results === void 0 ? void 0 : results.duration]
+        .filter(Boolean)
+        .join(' • ');
+    const pickupText = summaryDate ? `Pickup: ${summaryDate}` : '';
+    return (<div className="search-results__container">
+      <header className="card search-results__header" aria-live="polite">
+        <div>
+          <h1 className="search-results__title">
+            <span className="search-results__location">
+              <MapPinIcon className="icon-24"/>
+              <span>{originLabel}</span>
+            </span>
+            <span className="search-results__arrow" aria-hidden="true">
+              →
+            </span>
+            <span className="search-results__location">
+              <FlagIcon className="icon-24"/>
+              <span>{destinationLabel}</span>
+            </span>
+          </h1>
+          <ul className="search-results__meta" role="list">
+            {distanceDurationText && (<li>
+                <CarIcon className="icon-20"/>
+                <span>{distanceDurationText}</span>
+              </li>)}
+            {pickupText && (<li>
+                <ClockIcon className="icon-20"/>
+                <span>{pickupText}</span>
+              </li>)}
+          </ul>
+        </div>
+        <button type="button" className="pill" onClick={handleEditSearch}>
+          Edit search
+        </button>
+      </header>
+
+      <section className="card search-results__toolbar" aria-label="Sort search results">
+        <div className="form-field">
+          <label htmlFor="sortBy">Sort results</label>
+          <select id="sortBy" name="sortBy" value={sortBy || 'price_asc'} onChange={(event) => setSortBy === null || setSortBy === void 0 ? void 0 : setSortBy(event.target.value)}>
+            {SORT_OPTIONS.map((option) => (<option key={option.value} value={option.value}>
+                {option.label}
+              </option>))}
+          </select>
+        </div>
+        {activeFilterCount > 0 && (<button type="button" className="pill" onClick={resetFilters}>
+            Clear filters ({activeFilterCount})
+          </button>)}
+      </section>
+
+      <div className="search-results__list">
+        {displayedOptions.map((cab) => (<article key={cab.id} className="card search-card">
+            <div className="search-card__body">
+              <div className="search-card__content">
+                <h2 className="search-card__title">{cab.category}</h2>
+                <p className="muted">{resolveCarExamples(cab).join(' • ')}</p>
+                <ul className="search-card__features">
+                  <li>{cab.capacity} seats • {cab.estimatedDuration}</li>
+                  {cab.features.slice(0, 3).map((feature) => (<li key={feature}>{feature}</li>))}
+                </ul>
+                {roofCarrierUI && (<div className="search-card__addon" role="note" title="Great for extra luggage">
+                    <InfoIcon className="icon-16" focusable="false"/>
+                    <span>Roof carrier available starting @ ₹158</span>
+                  </div>)}
+                <div className="search-card__tags">
+                  <span className="pill">{cab.instantConfirmation ? 'Instant confirmation' : 'On request'}</span>
+                  <span className="pill">
+                    {cab.cancellationPolicy === 'free'
+                ? 'Free cancellation'
+                : cab.cancellationPolicy === 'flexible'
+                    ? 'Flexible cancellation'
+                    : 'Strict cancellation'}
+                  </span>
+                </div>
+              </div>
+              <div className="search-card__meta">
+                <div className="pill">{cab.capacity} seats</div>
+                <div className="search-card__price">₹{cab.price.toLocaleString()}</div>
+                <button type="button" className="cta cta--sm" onClick={() => handleCabSelect(cab)}>
+                  Select
+                </button>
+              </div>
+            </div>
+          </article>))}
       </div>
-    </>);
+    </div>);
 }

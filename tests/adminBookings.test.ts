@@ -1,31 +1,46 @@
 import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
 import { PrismaClient } from '@prisma/client';
-import adminBookingsHandler from '../pages/api/admin/bookings';
 import { runApi } from './apiTestUtils';
 
-const prisma = new PrismaClient();
-const TEST_DB_PATH = path.resolve(process.cwd(), 'test.db');
 const TEST_ADMIN_KEY = 'test-admin-key';
+
+function buildTestDatabaseUrl(baseUrl: string, schema: string): string {
+  const url = new URL(baseUrl);
+  url.searchParams.set('schema', schema);
+  url.search = url.searchParams.toString();
+  return url.toString();
+}
 
 describe('Admin bookings API', () => {
   const previousAdminKey = process.env.ADMIN_KEY;
   const previousDatabaseUrl = process.env.DATABASE_URL;
-  const databaseUrl = process.env.DATABASE_URL || 'file:./test.db?connection_limit=1';
+  const baseDatabaseUrl =
+    previousDatabaseUrl ?? 'postgresql://postgres:betsson123@localhost:5432/postgres';
+
+  let prisma: PrismaClient;
+  let adminBookingsHandler: any;
+  let schemaReady = false;
+  let schemaName = '';
+  let databaseUrl = '';
   let latestBookingId: number;
   let earliestBookingId: number;
-  let schemaReady = false;
 
   beforeAll(async () => {
-    if (fs.existsSync(TEST_DB_PATH)) {
-      fs.rmSync(TEST_DB_PATH);
-    }
+    schemaName = `test_admin_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+    databaseUrl = buildTestDatabaseUrl(baseDatabaseUrl, schemaName);
     process.env.DATABASE_URL = databaseUrl;
-    execSync('npx prisma db push --skip-generate', { stdio: 'pipe', env: { ...process.env, DATABASE_URL: databaseUrl } });
+
+    execSync('npx prisma db push --skip-generate', {
+      stdio: 'pipe',
+      env: { ...process.env, DATABASE_URL: databaseUrl },
+    });
+
     schemaReady = true;
+    prisma = new PrismaClient();
     await prisma.$connect();
     process.env.ADMIN_KEY = TEST_ADMIN_KEY;
+
+    ({ default: adminBookingsHandler } = await import('../pages/api/admin/bookings'));
 
     const originCity = await prisma.city.create({
       data: { name: 'Test Origin', slug: 'test-origin', state: 'TS' },
@@ -80,26 +95,29 @@ describe('Admin bookings API', () => {
   });
 
   afterAll(async () => {
+    if (schemaReady && prisma) {
+      try {
+        await prisma.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
+      } catch (error) {
+        // ignore schema cleanup failures in tests
+      }
+    }
+
     if (previousAdminKey === undefined) {
       delete process.env.ADMIN_KEY;
     } else {
       process.env.ADMIN_KEY = previousAdminKey;
     }
+
     if (previousDatabaseUrl === undefined) {
       delete process.env.DATABASE_URL;
     } else {
       process.env.DATABASE_URL = previousDatabaseUrl;
     }
-    if (schemaReady) {
-      try {
-        await prisma.booking.deleteMany();
-        await prisma.route.deleteMany();
-        await prisma.city.deleteMany();
-      } catch (error) {
-        // Ignore cleanup errors when schema was not fully initialized.
-      }
+
+    if (prisma) {
+      await prisma.$disconnect();
     }
-    await prisma.$disconnect();
   });
 
   test('persists bookings and exposes them via admin endpoint', async () => {

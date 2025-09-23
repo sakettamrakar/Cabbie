@@ -109,15 +109,15 @@
   font-size: var(--font-size-sm, 0.95rem);
 }
 
-th,
-td {
+.table th,
+.table td {
   text-align: left;
   padding: var(--space-3, 12px) var(--space-4, 16px);
   border-bottom: 1px solid var(--color-gray-200, #e4e7eb);
   white-space: nowrap;
 }
 
-th {
+.table th {
   font-size: var(--font-size-xs, 0.85rem);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -125,7 +125,7 @@ th {
   background: rgba(148, 163, 184, 0.1);
 }
 
-tr:hover {
+.table tr:hover {
   background: rgba(37, 99, 235, 0.05);
 }
 
@@ -193,8 +193,8 @@ tr:hover {
     padding: var(--space-4, 16px);
   }
 
-  th,
-  td {
+  .table th,
+  .table td {
     padding: var(--space-3, 12px);
   }
 

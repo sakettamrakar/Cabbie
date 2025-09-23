@@ -3,4 +3,4 @@
 if (!process.env.REDIS_URL)
     process.env.REDIS_URL = '';
 if (!process.env.DATABASE_URL)
-    process.env.DATABASE_URL = 'file:./test.db?connection_limit=1';
+    process.env.DATABASE_URL = 'postgresql://postgres:betsson123@localhost:5432/postgres';

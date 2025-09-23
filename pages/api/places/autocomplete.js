@@ -1,3 +1,5 @@
+import { getBrowserMapsKey, getMapsLanguage, getMapsRegion, getServerMapsKey, isMapsEnabled } from '../../../lib/maps';
+const TIMEOUT_MS = 3000;
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -9,25 +11,28 @@ export default async function handler(req, res) {
     if (input.length < 2) {
         return res.status(400).json({ error: 'Input must be at least 2 characters' });
     }
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
-        console.error('Google Places API key not configured');
+    const apiKey = getServerMapsKey() || getBrowserMapsKey();
+    if (!apiKey || !isMapsEnabled('server')) {
         // Return empty results instead of hardcoded suggestions
         return res.status(200).json({
             predictions: [],
             status: 'OK'
         });
     }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
         const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
         url.searchParams.set('input', input);
         url.searchParams.set('key', apiKey);
-        url.searchParams.set('types', 'establishment|geocode');
-        url.searchParams.set('components', 'country:in'); // Adjust country as needed
+        url.searchParams.set('types', 'geocode');
+        url.searchParams.set('components', 'country:in');
+        url.searchParams.set('language', getMapsLanguage());
+        url.searchParams.set('region', getMapsRegion().toLowerCase());
         if (sessiontoken && typeof sessiontoken === 'string') {
             url.searchParams.set('sessiontoken', sessiontoken);
         }
-        const response = await fetch(url.toString());
+        const response = await fetch(url.toString(), { signal: controller.signal });
         const data = await response.json();
         if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
             console.error('Google Places API error:', data.status);
@@ -38,5 +43,8 @@ export default async function handler(req, res) {
     catch (error) {
         console.error('Error calling Google Places API:', error);
         return res.status(500).json({ error: 'Internal server error' });
+    }
+    finally {
+        clearTimeout(timeout);
     }
 }

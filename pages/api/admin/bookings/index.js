@@ -32,18 +32,21 @@ export default async function handler(req, res) {
                 take: pageSize,
             }),
         ]);
-        const bookings = records.map((booking) => ({
-            booking_id: booking.id,
-            customer_name: (booking === null || booking === void 0 ? void 0 : booking.customer_name) || '',
-            customer_phone: booking.customer_phone,
-            origin: booking.origin_text,
-            destination: booking.destination_text,
-            pickup_datetime: booking.pickup_datetime.toISOString(),
-            car_type: booking.car_type,
-            fare: booking.fare_locked_inr || booking.fare_quote_inr,
-            status: booking.status,
-            created_at: booking.created_at.toISOString(),
-        }));
+        const bookings = records.map((booking) => {
+            var _a;
+            return ({
+                booking_id: booking.id,
+                customer_name: (_a = booking.customer_name) !== null && _a !== void 0 ? _a : '',
+                customer_phone: booking.customer_phone,
+                origin: booking.origin_text,
+                destination: booking.destination_text,
+                pickup_datetime: booking.pickup_datetime.toISOString(),
+                car_type: booking.car_type,
+                fare: booking.fare_locked_inr || booking.fare_quote_inr,
+                status: booking.status,
+                created_at: booking.created_at.toISOString(),
+            });
+        });
         res.status(200).json({
             ok: true,
             page,
@@ -54,6 +57,6 @@ export default async function handler(req, res) {
         });
     }
     catch (error) {
-        res.status(500).json({ ok: false, error: (error === null || error === void 0 ? void 0 : error.message) || 'Unexpected error' });
+        res.status(500).json({ ok: false, error: error.message || 'Unexpected error' });
     }
 }

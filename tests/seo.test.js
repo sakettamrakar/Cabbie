@@ -9,8 +9,7 @@ describe('seo helpers', () => {
     });
     test('buildMetaDescription with benefits limited to 3', () => {
         const desc = buildMetaDescription({ origin: 'raipur', destination: 'bilaspur', price: 999, benefits: ['AC Cars', 'Professional Drivers', '24x7 Support', 'ExtraIgnored'] });
-        expect(desc).toContain('Raipur to Bilaspur taxi fare from ₹999');
-        expect(desc).toContain('AC Cars, Professional Drivers, 24x7 Support');
+        expect(desc).toBe('Book Raipur to Bilaspur cab at fixed fare ₹999. Toll & GST included, doorstep pickup. AC Cars, Professional Drivers, 24x7 Support.');
         expect(desc).not.toContain('ExtraIgnored');
     });
     test('canonicalForFare', () => {
