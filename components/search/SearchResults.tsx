@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, type SVGProps } from 'react';
+import { features } from '@/config/features';
 import NoResults from '@/components/search/NoResults';
 import { useSearchResults } from '@/hooks/use-search-results';
 import { saveBookingData } from '@/lib/booking-utils';
+import { resolveCarExamples } from '@/lib/car-examples';
 import { toTitleCase } from '@/lib/strings';
 import type {
   SearchResultsData,
@@ -98,6 +100,25 @@ function CarIcon(props: IconProps) {
   );
 }
 
+function InfoIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="10" cy="10" r="8" />
+      <path d="M10 10v4" />
+      <circle cx="10" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 interface SearchResultsProps {
   initialData: SearchResultsData | null;
   searchParams: SearchQueryParams;
@@ -144,15 +165,19 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
     activeFilterCount = 0,
   } = useSearchResults(initialData) || {};
 
-  const originLabel = useMemo(
-    () => toTitleCase(results?.origin?.displayName ?? searchParams.origin ?? ''),
-    [results?.origin?.displayName, searchParams.origin],
-  );
+  const originLabel = useMemo(() => {
+    const fallback = results?.origin?.displayName ?? searchParams.origin ?? '';
+    const formatted = toTitleCase(fallback);
+    return formatted || fallback;
+  }, [results?.origin?.displayName, searchParams.origin]);
 
-  const destinationLabel = useMemo(
-    () => toTitleCase(results?.destination?.displayName ?? searchParams.destination ?? ''),
-    [results?.destination?.displayName, searchParams.destination],
-  );
+  const destinationLabel = useMemo(() => {
+    const fallback = results?.destination?.displayName ?? searchParams.destination ?? '';
+    const formatted = toTitleCase(fallback);
+    return formatted || fallback;
+  }, [results?.destination?.displayName, searchParams.destination]);
+
+  const { roofCarrierUI } = features;
 
   const summaryDate = results?.pickupDateTime ? formatDateParts(results.pickupDateTime) : '';
   const summaryDistance = results?.distance ? formatDistance(results.distance) : '';
@@ -331,13 +356,23 @@ export default function SearchResults({ initialData, searchParams }: SearchResul
             <div className="search-card__body">
               <div className="search-card__content">
                 <h2 className="search-card__title">{cab.category}</h2>
-                <p className="muted">{cab.carExamples.join(' • ')}</p>
+                <p className="muted">{resolveCarExamples(cab).join(' • ')}</p>
                 <ul className="search-card__features">
                   <li>{cab.capacity} seats • {cab.estimatedDuration}</li>
                   {cab.features.slice(0, 3).map((feature) => (
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
+                {roofCarrierUI && (
+                  <div
+                    className="search-card__addon"
+                    role="note"
+                    title="Great for extra luggage"
+                  >
+                    <InfoIcon className="icon-16" focusable="false" />
+                    <span>Roof carrier available starting @ ₹158</span>
+                  </div>
+                )}
                 <div className="search-card__tags">
                   <span className="pill">{cab.instantConfirmation ? 'Instant confirmation' : 'On request'}</span>
                   <span className="pill">

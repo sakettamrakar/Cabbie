@@ -751,6 +751,12 @@ table {
   min-width: 20px;
 }
 
+.icon-16 {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+}
+
 .icon-24 {
   width: 24px;
   height: 24px;
@@ -971,8 +977,13 @@ table {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  background: var(--surface-tint);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.08),
+      rgba(37, 99, 235, 0.04)
+    );
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.4);
 }
 
 .search-results__title {
@@ -1102,6 +1113,19 @@ table {
   gap: var(--space-3);
   align-items: flex-start;
   justify-content: space-between;
+}
+
+.search-card__addon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: calc(var(--space-1) + 2px) var(--space-3);
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .search-card__price {

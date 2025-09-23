@@ -10,6 +10,11 @@ describe('toTitleCase', () => {
     expect(toTitleCase('new-town east')).toBe('New-Town East');
   });
 
+  it('converts multi-word cities to title case', () => {
+    expect(toTitleCase('new delhi')).toBe('New Delhi');
+    expect(toTitleCase('durg')).toBe('Durg');
+  });
+
   it('returns empty string for falsy values', () => {
     expect(toTitleCase('')).toBe('');
   });

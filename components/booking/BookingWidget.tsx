@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { features } from '@/config/features';
+import { toTitleCase } from '@/lib/strings';
 import { debounce } from '../../lib/schedule';
 import {
   ensureSessionTokenObject,
@@ -59,12 +61,23 @@ const TRIP_TABS: { id: TabType; label: string }[] = [
 
 const TIME_SLOTS = generateTimeSlots();
 
+type RecentSearch = {
+  id: string;
+  origin: string;
+  destination: string;
+  createdAt: number;
+};
+
+const RECENT_SEARCHES_KEY = 'cabbie_recent_searches';
+const RECENT_SEARCHES_LIMIT = 3;
+
 export default function BookingWidget({
   initialPickup = '',
   initialDrop = '',
   className = ''
 }: BookingWidgetProps) {
   const router = useRouter();
+  const { recentSearches: recentSearchesEnabled } = features;
   const formRef = useRef<HTMLFormElement>(null);
   const pickupInputRef = useRef<HTMLInputElement | null>(null);
   const dropInputRef = useRef<HTMLInputElement | null>(null);
@@ -73,6 +86,8 @@ export default function BookingWidget({
   const [activeTab, setActiveTab] = useState<TabType>('one-way');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   
   // Form data state
   const [formData, setFormData] = useState<BookingFormData>({
@@ -185,6 +200,26 @@ export default function BookingWidget({
     }));
     setSuggestions(null);
   };
+
+  const handleRecentSearchApply = useCallback(
+    (search: RecentSearch) => {
+      setActiveTab((current) => (current === 'hourly' ? 'one-way' : current));
+      setFormData((prev) => {
+        const nextTripType = prev.tripType === 'hourly' ? 'one-way' : prev.tripType;
+        return {
+          ...prev,
+          tripType: nextTripType,
+          pickup: { ...prev.pickup, display: search.origin },
+          drop: { ...prev.drop, display: search.destination },
+        };
+      });
+
+      if (pickupInputRef.current) {
+        pickupInputRef.current.focus();
+      }
+    },
+    [setFormData, setActiveTab],
+  );
 
   useEffect(() => {
     if (!mapsEnabled || mapsFailed) {
@@ -332,6 +367,37 @@ export default function BookingWidget({
       dropAutocomplete = null;
     };
   }, [mapsEnabled, mapsFailed, setFormData]);
+
+  useEffect(() => {
+    if (!recentSearchesEnabled || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as Partial<RecentSearch>[];
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const sanitized = parsed
+        .filter(
+          (entry): entry is RecentSearch =>
+            !!entry &&
+            typeof entry.origin === 'string' &&
+            typeof entry.destination === 'string',
+        )
+        .slice(0, RECENT_SEARCHES_LIMIT);
+
+      setRecentSearches(sanitized);
+    } catch (error) {
+      console.warn('Failed to read recent searches', error);
+    }
+  }, [recentSearchesEnabled]);
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -438,10 +504,51 @@ export default function BookingWidget({
       } else {
         searchParams.set('trip_type', formData.tripType);
       }
-      
+
+      if (
+        recentSearchesEnabled &&
+        typeof window !== 'undefined' &&
+        activeTab !== 'hourly'
+      ) {
+        const originDisplay = formData.pickup.display.trim();
+        const destinationDisplay = formData.drop.display.trim();
+
+        if (originDisplay && destinationDisplay) {
+          const createdAt = Date.now();
+          const nextEntry: RecentSearch = {
+            id: `${createdAt}`,
+            origin: toTitleCase(originDisplay) || originDisplay,
+            destination: toTitleCase(destinationDisplay) || destinationDisplay,
+            createdAt,
+          };
+
+          setRecentSearches((prev) => {
+            const deduped = [
+              nextEntry,
+              ...prev.filter(
+                (item) =>
+                  item.origin !== nextEntry.origin ||
+                  item.destination !== nextEntry.destination,
+              ),
+            ].slice(0, RECENT_SEARCHES_LIMIT);
+
+            try {
+              window.localStorage.setItem(
+                RECENT_SEARCHES_KEY,
+                JSON.stringify(deduped),
+              );
+            } catch (storageError) {
+              console.warn('Failed to persist recent searches', storageError);
+            }
+
+            return deduped;
+          });
+        }
+      }
+
       // Redirect to search results page
       router.push(`/search-results?${searchParams.toString()}`);
-      
+
     } catch (error) {
       console.error('Error submitting form:', error);
       setErrors({
@@ -1097,11 +1204,32 @@ export default function BookingWidget({
         >
           {isLoading ? 'Searching...' : 'Search Cabs'}
         </button>
-        
+
         {errors.general && (
           <p className="mt-3 text-sm text-red-600">{errors.general}</p>
         )}
       </form>
+
+      {recentSearchesEnabled && recentSearches.length > 0 && (
+        <aside className="mt-6 border-t border-gray-200 pt-4" aria-label="Recent Searches">
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Recent Searches
+          </h3>
+          <ul className="mt-3 space-y-2">
+            {recentSearches.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  onClick={() => handleRecentSearchApply(item)}
+                >
+                  {item.origin} → {item.destination}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
     </div>
   );
 }
