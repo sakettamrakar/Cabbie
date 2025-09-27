@@ -1,8 +1,16 @@
+import type { GetServerSideProps } from 'next';
 import Layout from '../../components/Layout';
 import HeadSeo from '../../components/HeadSeo';
 import Link from 'next/link';
 import { SITE_BASE_URL } from '../../lib/seo';
 import { useEffect } from 'react';
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  if (process.env.FEATURE_MY_BOOKINGS === 'true') {
+    return { redirect: { destination: '/my-bookings', permanent: false } };
+  }
+  return { props: {} };
+};
 
 export default function BookingIndex(){
   useEffect(()=>{

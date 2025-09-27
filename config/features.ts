@@ -14,6 +14,7 @@ const coerce = (value: string | undefined, fallback: boolean) => {
 export const features = {
   roofCarrierUI: coerce(process.env.NEXT_PUBLIC_FEATURE_ROOF_CARRIER_UI, true),
   recentSearches: coerce(process.env.NEXT_PUBLIC_FEATURE_RECENT_SEARCHES, true),
+  myBookings: coerce(process.env.NEXT_PUBLIC_FEATURE_MY_BOOKINGS, false),
 } as const;
 
 export type FeatureFlags = typeof features;

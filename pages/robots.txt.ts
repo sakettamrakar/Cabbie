@@ -7,6 +7,8 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     'User-agent: *',
     'Disallow: /admin/',
     'Disallow: /api/',
+    'Disallow: /my-bookings',
+    'Disallow: /my-bookings/',
     'Allow: /',
     `Sitemap: https://${domain}/sitemap.xml`
   ].join('\n');
@@ -19,3 +21,4 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
 
 // This page just streams robots.txt; nothing to render.
 export default function Robots(){ return null; }
+
