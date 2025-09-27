@@ -245,7 +245,15 @@ const BookingConfirmationPage = () => {
                   <button
                     type="button"
                     className={styles.secondaryButton}
-                    onClick={() => router.push('/booking')}
+                    onClick={() => {
+                      const manageEnabled = process.env.NEXT_PUBLIC_FEATURE_MY_BOOKINGS === 'true';
+                      if (manageEnabled) {
+                        const query = trimmedPhone ? `?phone=${encodeURIComponent(trimmedPhone)}` : '';
+                        router.push(`/my-bookings${query}`);
+                      } else {
+                        router.push('/booking');
+                      }
+                    }}
                   >
                     View My Bookings
                   </button>

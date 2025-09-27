@@ -23,7 +23,11 @@ export const BookingQuoteInput = z.object({
 	discount_code: z.string().min(2).max(32).optional().nullable()
 });
 export const OTPIssueBody = z.object({ phone: z.string().regex(/^[0-9]{10}$/,'phone must be 10 digits') });
-export const OTPVerifyBody = z.object({ phone:z.string().regex(/^[0-9]{10}$/,'phone must be 10 digits'), otp:z.string().length(4) });
+export const OTPVerifyBody = z.object({
+  phone: z.string().regex(/^[0-9]{10}$/, 'phone must be 10 digits'),
+  otp: z.string().length(4),
+  context: z.enum(['booking', 'manage']).optional(),
+});
 
 export type Infer<T extends z.ZodTypeAny> = z.infer<T>;
 
