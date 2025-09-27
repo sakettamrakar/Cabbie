@@ -1,40 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { PrismaClient } from '@prisma/client';
 import { validatePhoneNumber } from '@/lib/validate';
+import { persistSimpleBooking, SimpleBookingPayload } from '@/lib/simpleBookingPersistence';
 
-interface SimpleBookingRequest {
-  // Trip details
-  origin: string;
-  destination: string;
-  pickup_datetime: string;
-  return_datetime?: string;
-  passengers?: string;
-  luggage?: string;
-  
-  // Selected cab details
-  cab_id: string;
-  cab_category: string;
-  cab_type: string;
-  fare: number;
-  estimated_duration: string;
-  estimated_distance: string;
-  
-  // Passenger details
-  passenger_name: string;
-  passenger_phone: string;
-}
+type SimpleBookingRequest = SimpleBookingPayload;
 
 interface BookingResponse {
   success: boolean;
   booking_id?: string;
   message?: string;
   error?: string;
-}
-
-// Generate a unique booking ID
-function generateBookingId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substr(2, 5);
-  return `CAB${timestamp}${random}`.toUpperCase();
 }
 
 // Simulate SMS/WhatsApp notification
@@ -47,6 +22,8 @@ async function sendBookingNotification(booking: any): Promise<void> {
   // TODO: Integrate with actual SMS/WhatsApp service
   // await smsService.send(booking.passenger_phone, message);
 }
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BookingResponse>) {
   if (req.method !== 'POST') {
@@ -116,12 +93,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    // Generate booking ID
-    const booking_id = generateBookingId();
+    const normalizedPhone = phoneValidation.normalized || passenger_phone;
 
-    // Create booking object
-    const booking = {
-      booking_id,
+    const record = await persistSimpleBooking(prisma, {
+      origin,
+      destination,
+      pickup_datetime,
+      return_datetime,
+      passengers: passengers || '1',
+      luggage: luggage || '0',
+      cab_id,
+      cab_category,
+      cab_type,
+      fare,
+      estimated_duration,
+      estimated_distance,
+      passenger_name,
+      passenger_phone: normalizedPhone,
+    });
+
+    const bookingPayload = {
+      booking_id: record.id,
       origin: origin.trim(),
       destination: destination.trim(),
       pickup_datetime,
@@ -135,50 +127,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       estimated_duration,
       estimated_distance,
       passenger_name: passenger_name.trim(),
-      passenger_phone: phoneValidation.normalized || passenger_phone,
-      status: 'PENDING',
-      payment_mode: 'COD', // Default to Cash on Delivery
-      created_at: new Date().toISOString(),
+      passenger_phone: normalizedPhone,
+      status: record.status,
+      payment_mode: record.payment_mode,
+      created_at: record.created_at,
     };
 
-    // TODO: Save to database
-    // In a real application, you would save this to your database:
-    /*
-    const result = await db.bookings.create({
-      data: {
-        id: booking.booking_id,
-        route_id: null, // Will be determined later
-        origin_text: booking.origin,
-        destination_text: booking.destination,
-        pickup_datetime: new Date(booking.pickup_datetime),
-        car_type: booking.cab_type.toUpperCase(),
-        fare_quote_inr: booking.fare,
-        payment_mode: 'COD',
-        status: 'PENDING',
-        customer_name: booking.passenger_name,
-        customer_phone: booking.passenger_phone,
-        // Additional fields for extended booking data
-        cab_id: booking.cab_id,
-        cab_category: booking.cab_category,
-        estimated_duration: booking.estimated_duration,
-        estimated_distance: booking.estimated_distance,
-        passengers: parseInt(booking.passengers),
-        luggage: parseInt(booking.luggage),
-        return_datetime: booking.return_datetime ? new Date(booking.return_datetime) : null,
-      }
-    });
-    */
+    await sendBookingNotification(bookingPayload);
 
-    // For now, simulate database save with console log
-    console.log('💾 Booking saved to database:', booking);
-
-    // Send notification to passenger
-    await sendBookingNotification(booking);
-
-    // Return success response
     return res.status(200).json({
       success: true,
-      booking_id,
+      booking_id: String(record.id),
       message: 'Booking confirmed successfully'
     });
 
