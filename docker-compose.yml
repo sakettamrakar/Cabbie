@@ -14,16 +14,16 @@ services:
       - db
       - redis
   db:
-    image: mysql:8
+    image: postgres:16-alpine
     container_name: cab_db
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: cabdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cabbie
     ports:
-      - "3306:3306"
-    command: ["--default-authentication-plugin=mysql_native_password"]
+      - "5432:5432"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 20
