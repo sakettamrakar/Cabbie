@@ -95,6 +95,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const normalizedPhone = phoneValidation.normalized || passenger_phone;
 
+    if (cab_type !== undefined && typeof cab_type !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid cab type'
+      });
+    }
+
+    if (cab_category !== undefined && typeof cab_category !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid cab category'
+      });
+    }
+
+    const normalizedCabType =
+      typeof cab_type === 'string' && cab_type.trim().length > 0 ? cab_type.trim() : undefined;
+
     const record = await persistSimpleBooking(prisma, {
       origin,
       destination,
@@ -104,7 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       luggage: luggage || '0',
       cab_id,
       cab_category,
-      cab_type,
+      cab_type: normalizedCabType,
       fare,
       estimated_duration,
       estimated_distance,
@@ -122,7 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       luggage: luggage || '0',
       cab_id,
       cab_category,
-      cab_type,
+      cab_type: normalizedCabType || 'UNKNOWN',
       fare,
       estimated_duration,
       estimated_distance,

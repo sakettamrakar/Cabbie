@@ -8,8 +8,8 @@ export interface SimpleBookingPayload {
   passengers?: string;
   luggage?: string;
   cab_id: string;
-  cab_category: string;
-  cab_type: string;
+  cab_category?: string;
+  cab_type?: string;
   fare: number;
   estimated_duration: string;
   estimated_distance: string;
@@ -84,13 +84,18 @@ export async function persistSimpleBooking(
   const destination = await ensureCity(prisma, payload.destination);
   const route = await ensureRoute(prisma, origin, destination);
 
+  const carType =
+    typeof payload.cab_type === 'string' && payload.cab_type.trim().length > 0
+      ? payload.cab_type.trim().toUpperCase()
+      : 'UNKNOWN';
+
   return prisma.booking.create({
     data: {
       route_id: route.id,
       origin_text: payload.origin.trim(),
       destination_text: payload.destination.trim(),
       pickup_datetime: new Date(payload.pickup_datetime),
-      car_type: payload.cab_type.toUpperCase(),
+      car_type: carType,
       fare_quote_inr: Math.round(payload.fare),
       fare_locked_inr: Math.round(payload.fare),
       payment_mode: 'COD',
